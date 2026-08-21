@@ -18,6 +18,7 @@ from app.models.book import (
     PublicBook,
 )
 from app.services.book_errors import BookServiceError
+from app.services.book_search_query import BookSearchQueryBuilder, BookSearchTerms
 from app.services.google_books_provider import GoogleBooksProvider
 from app.services.openlibrary_provider import OpenLibraryProvider
 from app.services.public_book_utils import normalized_title_author
@@ -28,6 +29,7 @@ PUBLIC_BOOK_DATA_SOURCE = "public_api"
 PUBLIC_BOOK_DATA_NOTICE = "书目元数据来自 Open Library 与 Google Books 公共 API。"
 NO_BOOK_RECOMMENDATION_MESSAGE = "暂未找到与该知识节点相关的公开图书。"
 OPEN_LIBRARY_FALLBACK_THRESHOLD = 5
+ENGLISH_BOOK_QUERY_LANGUAGE = "en"
 
 
 class BookProvider(Protocol):
@@ -49,6 +51,13 @@ class _CacheEntry:
     response: BookSearchResponse
 
 
+@dataclass
+class _ProviderSearchOutcome:
+    books: list[PublicBook]
+    attempts: int
+    failures: int
+
+
 class PublicBookSearchService:
     """Use Open Library first and Google Books only when more coverage is needed."""
 
@@ -59,9 +68,11 @@ class PublicBookSearchService:
         *,
         cache_ttl_seconds: float | None = None,
         cache_max_entries: int | None = None,
+        query_builder: BookSearchQueryBuilder | None = None,
     ) -> None:
         self.openlibrary = openlibrary or OpenLibraryProvider.from_env()
         self.google_books = google_books or GoogleBooksProvider.from_env()
+        self.query_builder = query_builder or BookSearchQueryBuilder()
         self.cache_ttl_seconds = max(
             1.0,
             cache_ttl_seconds
@@ -84,6 +95,22 @@ class PublicBookSearchService:
         limit: int = 10,
         language: str | None = None,
     ) -> BookSearchResponse:
+        response, _terms = await self.search_books_with_terms(
+            query,
+            page=page,
+            limit=limit,
+            language=language,
+        )
+        return response
+
+    async def search_books_with_terms(
+        self,
+        query: str,
+        *,
+        page: int = 1,
+        limit: int = 10,
+        language: str | None = None,
+    ) -> tuple[BookSearchResponse, BookSearchTerms]:
         normalized_query = query.strip()
         if not normalized_query:
             raise BookServiceError("INVALID_RESPONSE", message="请输入检索关键词。")
@@ -91,43 +118,48 @@ class PublicBookSearchService:
             raise BookServiceError("INVALID_RESPONSE", message="图书检索分页参数无效。")
 
         key = self._cache_key(normalized_query, page, limit, language)
+        terms = await self.query_builder.build(normalized_query)
         cached = self._get_cached(key)
         if cached is not None:
             logger.info("Public book search cache hit query_length=%d", len(normalized_query))
-            return cached
+            return cached, terms
 
-        source_errors: list[BookServiceError] = []
-        openlibrary_books: list[PublicBook] = []
-        try:
-            openlibrary_books = await self.openlibrary.search(
-                normalized_query,
+        search_queries = [(terms.original_query, language)]
+        if terms.english_query and terms.english_query.casefold() != terms.original_query.casefold():
+            search_queries.append((terms.english_query, ENGLISH_BOOK_QUERY_LANGUAGE))
+
+        all_books: list[PublicBook] = []
+        query_result_counts: dict[str, int] = {"original": 0, "english": 0}
+        attempts = 0
+        failures = 0
+        for query_index, (search_query, search_language) in enumerate(search_queries):
+            outcome = await self._search_query_with_fallback(
+                search_query,
                 page=page,
                 limit=limit,
-                language=language,
+                language=search_language,
             )
-        except BookServiceError as error:
-            source_errors.append(error)
+            all_books.extend(outcome.books)
+            attempts += outcome.attempts
+            failures += outcome.failures
+            query_result_counts["english" if query_index else "original"] = len(outcome.books)
 
-        books = openlibrary_books
-        if len(openlibrary_books) < OPEN_LIBRARY_FALLBACK_THRESHOLD:
-            try:
-                google_books = await self.google_books.search(
-                    normalized_query,
-                    page=page,
-                    limit=limit,
-                    language=language,
-                )
-            except BookServiceError as error:
-                source_errors.append(error)
-            else:
-                books = _merge_books(openlibrary_books, google_books)
-
-        if not books and len(source_errors) >= 2:
+        if not all_books and attempts > 0 and failures == attempts:
             raise BookServiceError(
                 "BOOK_SOURCE_UNAVAILABLE",
                 reason="all_book_sources_unavailable",
             )
 
+        books = _rank_search_books(_merge_books([], all_books), terms)
+        logger.info(
+            "Public book bilingual search completed original_query_length=%d "
+            "english_query_generated=%s original_result_count=%d english_result_count=%d merged_count=%d",
+            len(normalized_query),
+            bool(terms.english_query),
+            query_result_counts["original"],
+            query_result_counts["english"],
+            len(books),
+        )
         response = BookSearchResponse(
             data_source=PUBLIC_BOOK_DATA_SOURCE,
             query=normalized_query,
@@ -139,7 +171,59 @@ class PublicBookSearchService:
             message="暂未找到匹配的公开图书。" if not books else None,
         )
         self._set_cached(key, response)
-        return response.model_copy(deep=True)
+        return response.model_copy(deep=True), terms
+
+    async def _search_query_with_fallback(
+        self,
+        query: str,
+        *,
+        page: int,
+        limit: int,
+        language: str | None,
+    ) -> _ProviderSearchOutcome:
+        openlibrary_books: list[PublicBook] = []
+        google_books: list[PublicBook] = []
+        attempts = 0
+        failures = 0
+
+        attempts += 1
+        try:
+            openlibrary_books = await self.openlibrary.search(
+                query,
+                page=page,
+                limit=limit,
+                language=language,
+            )
+        except BookServiceError as error:
+            failures += 1
+            logger.info(
+                "Public book source failed source=openlibrary query_length=%d code=%s",
+                len(query),
+                error.code,
+            )
+
+        if len(openlibrary_books) < OPEN_LIBRARY_FALLBACK_THRESHOLD:
+            attempts += 1
+            try:
+                google_books = await self.google_books.search(
+                    query,
+                    page=page,
+                    limit=limit,
+                    language=language,
+                )
+            except BookServiceError as error:
+                failures += 1
+                logger.info(
+                    "Public book source failed source=google_books query_length=%d code=%s",
+                    len(query),
+                    error.code,
+                )
+
+        return _ProviderSearchOutcome(
+            books=_merge_books(openlibrary_books, google_books),
+            attempts=attempts,
+            failures=failures,
+        )
 
     def _cache_key(
         self,
@@ -198,8 +282,9 @@ class PublicBookService:
         queries = _recommendation_queries(request)
         last_query = queries[-1]
         search_result: BookSearchResponse | None = None
+        search_terms: BookSearchTerms | None = None
         for query in queries:
-            search_result = await self.search_books(
+            search_result, search_terms = await self.search_service.search_books_with_terms(
                 query,
                 page=1,
                 limit=20,
@@ -221,7 +306,7 @@ class PublicBookService:
 
         ranked = []
         for book in search_result.books:
-            relevance, match_text, match_source = _match_book(book, request)
+            relevance, match_text, match_source = _match_book(book, request, search_terms)
             completeness = _metadata_completeness(book)
             reason = _recommendation_reason(book, request, search_result.query, match_text, match_source)
             ranked.append((relevance, completeness, _year_value(book), book.title.casefold(), book, reason))
@@ -258,6 +343,7 @@ def _recommendation_queries(request: BookRecommendRequest) -> list[str]:
 def _match_book(
     book: PublicBook,
     request: BookRecommendRequest,
+    search_terms: BookSearchTerms | None = None,
 ) -> tuple[float, str | None, str | None]:
     candidates = (
         (request.node_label.strip(), 1.0),
@@ -279,6 +365,29 @@ def _match_book(
     for query, weight in candidates:
         if _contains(searchable_authors, query):
             return round(weight * 0.6, 4), query, "author"
+
+    if search_terms and search_terms.english_query:
+        display_query = next(
+            (
+                query
+                for query in (
+                    request.node_label,
+                    request.node_domain,
+                    request.root_topic,
+                )
+                if query.strip().casefold() == search_terms.original_query.casefold()
+            ),
+            request.node_label,
+        )
+        english_query = search_terms.english_query
+        if _contains(book.title, english_query):
+            return 1.0, display_query, "title"
+        if _contains(searchable_subjects, english_query):
+            return 0.85, display_query, "subject"
+        if _contains(searchable_description, english_query):
+            return 0.75, display_query, "description"
+        if _contains(searchable_authors, english_query):
+            return 0.6, display_query, "author"
     return 0.35, None, None
 
 
@@ -343,6 +452,77 @@ def _merge_books(primary: list[PublicBook], fallback: list[PublicBook]) -> list[
         if _metadata_completeness(book) > _metadata_completeness(existing):
             merged[existing_key] = book
     return list(merged.values())
+
+
+def _rank_search_books(books: list[PublicBook], terms: BookSearchTerms) -> list[PublicBook]:
+    ranked = list(enumerate(books))
+    ranked.sort(
+        key=lambda item: (
+            -_book_search_relevance(item[1], terms),
+            -_metadata_completeness(item[1]),
+            -_year_value(item[1]),
+            item[1].title.casefold(),
+            item[0],
+        )
+    )
+    return [book for _index, book in ranked]
+
+
+def _book_search_relevance(book: PublicBook, terms: BookSearchTerms) -> float:
+    queries = [terms.original_query]
+    if terms.english_query:
+        queries.append(terms.english_query)
+    relevance = max(_query_match_score(book, query) for query in queries)
+
+    language = (book.language or "").casefold()
+    if terms.english_query and language in {"en", "eng", "english"}:
+        relevance += 0.03
+    elif _contains_cjk_text(terms.original_query) and language in {"zh", "chi", "zho", "cmn", "chinese"}:
+        relevance += 0.02
+
+    year = _year_value(book)
+    if year:
+        relevance += min(max(year - 1900, 0) / 200, 1) * 0.02
+    return relevance
+
+
+def _query_match_score(book: PublicBook, query: str) -> float:
+    normalized_query = _normalize_search_text(query)
+    if not normalized_query:
+        return 0.0
+
+    title = _normalize_search_text(book.title)
+    subjects = _normalize_search_text(" ".join(book.subjects))
+    description = _normalize_search_text(book.description or "")
+    authors = _normalize_search_text(" ".join(book.authors))
+    if normalized_query in title:
+        return 1.0
+
+    tokens = normalized_query.split()
+    title_coverage = _token_coverage(tokens, title)
+    subject_coverage = _token_coverage(tokens, subjects)
+    description_coverage = _token_coverage(tokens, description)
+    author_coverage = _token_coverage(tokens, authors)
+    return max(
+        0.86 * title_coverage,
+        0.72 * subject_coverage,
+        0.58 * description_coverage,
+        0.42 * author_coverage,
+    )
+
+
+def _token_coverage(tokens: list[str], value: str) -> float:
+    if not tokens or not value:
+        return 0.0
+    return sum(token in value for token in tokens) / len(tokens)
+
+
+def _normalize_search_text(value: str) -> str:
+    return re.sub(r"[^\w]+", " ", value.casefold(), flags=re.UNICODE).strip()
+
+
+def _contains_cjk_text(value: str) -> bool:
+    return bool(re.search(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]", value))
 
 
 def _dedupe_key(book: PublicBook) -> str:

@@ -13,6 +13,7 @@ from app.api import books as books_api
 from app.main import app
 from app.models.book import BookRecommendRequest, BookSearchResponse, PublicBook
 from app.services.book_errors import BookServiceError
+from app.services.book_search_query import BookSearchQueryBuilder
 from app.services.google_books_provider import GoogleBooksProvider
 from app.services.openlibrary_provider import OpenLibraryProvider
 from app.services.public_book_service import PublicBookSearchService, PublicBookService
@@ -61,6 +62,7 @@ def public_book(
     isbn_13: str | None = None,
     description: str | None = None,
     authors: list[str] | None = None,
+    language: str = "chi",
 ) -> PublicBook:
     return PublicBook(
         id=isbn_13 and f"isbn:{isbn_13}" or f"{source}:{book_id}",
@@ -75,7 +77,7 @@ def public_book(
         isbn_13=isbn_13,
         subjects=["主题"],
         description=description,
-        language="chi",
+        language=language,
         cover_url=None,
         info_url=None,
         preview_url=None,
@@ -214,6 +216,30 @@ class FakeProvider:
         return None
 
 
+class QueryProvider:
+    def __init__(self, results_by_query: dict[str, list[PublicBook]]) -> None:
+        self.results_by_query = results_by_query
+        self.calls: list[dict[str, Any]] = []
+
+    async def search(self, query: str, **kwargs: Any) -> list[PublicBook]:
+        self.calls.append({"query": query, **kwargs})
+        return list(self.results_by_query.get(query, []))
+
+    async def close(self) -> None:
+        return None
+
+
+class FakeSearchTermLLM:
+    def __init__(self, terms_by_query: dict[str, str]) -> None:
+        self.terms_by_query = terms_by_query
+        self.calls: list[list[dict[str, Any]]] = []
+
+    async def chat_completion(self, messages: list[dict[str, Any]], **_kwargs: Any) -> dict[str, Any]:
+        self.calls.append(messages)
+        query = messages[-1]["content"]
+        return {"choices": [{"message": {"content": self.terms_by_query[query]}}]}
+
+
 def test_composite_skips_google_when_open_library_has_enough_results() -> None:
     open_library = FakeProvider([public_book(str(i), f"书{i}") for i in range(5)])
     google = FakeProvider([public_book("g", "Google 书", source="google_books")])
@@ -224,6 +250,97 @@ def test_composite_skips_google_when_open_library_has_enough_results() -> None:
     assert len(result.books) == 4
     assert len(open_library.calls) == 1
     assert google.calls == []
+
+
+def test_bilingual_search_merges_deduplicates_and_keeps_english_books() -> None:
+    duplicate_isbn = "9780306406157"
+    chinese_book = public_book("zh", "犯罪心理学入门", language="chi")
+    open_duplicate = public_book("open-duplicate", "Criminal Psychology", isbn_13=duplicate_isbn, language="eng")
+    google_duplicate = public_book(
+        "google-duplicate",
+        "Criminal Psychology",
+        source="google_books",
+        isbn_13=duplicate_isbn,
+        description="完整的英文公开书目简介。",
+        language="en",
+    )
+    english_book = public_book(
+        "english",
+        "The Psychology of Crime",
+        source="google_books",
+        authors=["English Author"],
+        language="en",
+    )
+    open_library = QueryProvider({
+        "犯罪心理学": [chinese_book],
+        "criminal psychology": [open_duplicate],
+    })
+    google = QueryProvider({
+        "犯罪心理学": [],
+        "criminal psychology": [google_duplicate, english_book],
+    })
+    term_llm = FakeSearchTermLLM({"犯罪心理学": "criminal psychology"})
+    service = PublicBookSearchService(
+        open_library,
+        google,
+        query_builder=BookSearchQueryBuilder(term_llm),
+        cache_ttl_seconds=600,
+        cache_max_entries=10,
+    )
+
+    first = run(service.search_books("犯罪心理学", page=1, limit=10, language=None))
+    second = run(service.search_books("犯罪心理学", page=1, limit=10, language=None))
+
+    assert {book.title for book in first.books} == {
+        "犯罪心理学入门",
+        "Criminal Psychology",
+        "The Psychology of Crime",
+    }
+    assert len(first.books) == 3
+    assert len({book.id for book in first.books}) == 3
+    assert first.query == "犯罪心理学"
+    assert [book.id for book in second.books] == [book.id for book in first.books]
+    assert len(term_llm.calls) == 1
+    assert [call["query"] for call in open_library.calls] == ["犯罪心理学", "criminal psychology"]
+    assert [call["query"] for call in google.calls] == ["犯罪心理学", "criminal psychology"]
+    assert open_library.calls[1]["language"] == "en"
+    assert google.calls[1]["language"] == "en"
+    assert first.books[0].description == "完整的英文公开书目简介。"
+
+
+def test_bilingual_recommendation_uses_english_results_without_translating_ui_context() -> None:
+    english_book = public_book(
+        "english",
+        "Criminal Psychology",
+        source="google_books",
+        authors=["English Author"],
+        language="en",
+    )
+    open_library = QueryProvider({"犯罪心理学": [], "criminal psychology": [english_book]})
+    google = QueryProvider({"犯罪心理学": [], "criminal psychology": []})
+    service = PublicBookService(
+        PublicBookSearchService(
+            open_library,
+            google,
+            query_builder=BookSearchQueryBuilder(
+                FakeSearchTermLLM({"犯罪心理学": "criminal psychology"})
+            ),
+            cache_ttl_seconds=600,
+            cache_max_entries=10,
+        )
+    )
+
+    response = run(service.recommend_books(BookRecommendRequest(
+        root_topic="犯罪学",
+        node_label="犯罪心理学",
+        node_domain="心理学",
+        surprise_level=0.5,
+    )))
+
+    assert response.books[0].title == "Criminal Psychology"
+    assert "犯罪心理学" in response.books[0].reason
+    assert "criminal psychology" not in response.books[0].reason
+    assert [call["query"] for call in open_library.calls] == ["犯罪心理学", "criminal psychology"]
 
 
 def test_composite_falls_back_and_deduplicates_by_isbn_and_cache() -> None:

@@ -16,13 +16,15 @@ from app.models.book import BookRecommendResponse, BookRecommendation, BookSearc
 from app.models.book_agent import BookAgentRequest, BookAgentResponse, SearchBooksToolArgs
 from app.services.book_agent import BOOK_AGENT_SYSTEM_PROMPT, SEARCH_BOOKS_TOOL, BookAgent
 from app.services.book_errors import BookServiceError
+from app.services.book_search_query import BookSearchQueryBuilder
+from app.services.public_book_service import PublicBookSearchService, PublicBookService
 
 
 def run(awaitable: Any) -> Any:
     return asyncio.run(awaitable)
 
 
-def book(book_id: str = "book-1", title: str = "程序化叙事设计") -> PublicBook:
+def book(book_id: str = "book-1", title: str = "程序化叙事设计", language: str = "zh") -> PublicBook:
     return PublicBook(
         id=book_id,
         source="openlibrary",
@@ -36,7 +38,7 @@ def book(book_id: str = "book-1", title: str = "程序化叙事设计") -> Publi
         isbn_13=None,
         subjects=["叙事"],
         description="公开数据源返回的简介。",
-        language="zh",
+        language=language,
         cover_url=None,
         info_url=f"https://openlibrary.org/works/{book_id}",
         preview_url=None,
@@ -136,6 +138,29 @@ class FakeBookService:
         return recommendation_response(item)
 
 
+class QueryProvider:
+    def __init__(self, results_by_query: dict[str, list[PublicBook]]) -> None:
+        self.results_by_query = results_by_query
+        self.calls: list[dict[str, Any]] = []
+
+    async def search(self, query: str, **kwargs: Any) -> list[PublicBook]:
+        self.calls.append({"query": query, **kwargs})
+        return list(self.results_by_query.get(query, []))
+
+    async def close(self) -> None:
+        return None
+
+
+class FixedSearchTermLLM:
+    def __init__(self, term: str) -> None:
+        self.term = term
+        self.calls = 0
+
+    async def chat_completion(self, _messages: list[dict[str, Any]], **_kwargs: Any) -> dict[str, Any]:
+        self.calls += 1
+        return {"choices": [{"message": {"content": self.term}}]}
+
+
 def test_agent_executes_search_books_and_only_returns_verified_ids() -> None:
     real_book = book()
     llm = FakeLLM([
@@ -155,6 +180,35 @@ def test_agent_executes_search_books_and_only_returns_verified_ids() -> None:
     assert "程序化叙事设计" in llm.calls[1][0][-1]["content"]
 
 
+def test_one_agent_tool_call_runs_internal_bilingual_search() -> None:
+    real_book = book("english", "Criminal Psychology", language="en")
+    agent_llm = FakeLLM([
+        tool_response("call-1", "犯罪心理学"),
+        final_response({"book_id": real_book.id, "reason": "来自公开工具结果。"}),
+    ])
+    term_llm = FixedSearchTermLLM("criminal psychology")
+    open_library = QueryProvider({"犯罪心理学": [], "criminal psychology": [real_book]})
+    google = QueryProvider({"犯罪心理学": [], "criminal psychology": []})
+    book_service = PublicBookService(
+        PublicBookSearchService(
+            open_library,
+            google,
+            query_builder=BookSearchQueryBuilder(term_llm),
+            cache_ttl_seconds=600,
+            cache_max_entries=10,
+        )
+    )
+
+    response = run(BookAgent(llm_service=agent_llm, book_service=book_service).discover(request()))
+
+    assert response.tool_calls == 1
+    assert response.queries == ["犯罪心理学"]
+    assert response.books[0].book.id == real_book.id
+    assert term_llm.calls == 1
+    assert [call["query"] for call in open_library.calls] == ["犯罪心理学", "criminal psychology"]
+    assert len(agent_llm.calls) == 2
+
+
 def test_unknown_final_id_is_discarded_and_prompt_requires_verified_selection() -> None:
     real_book = book()
     llm = FakeLLM([
@@ -172,6 +226,8 @@ def test_unknown_final_id_is_discarded_and_prompt_requires_verified_selection() 
     assert "所有具体书名、作者、ISBN" in BOOK_AGENT_SYSTEM_PROMPT
     assert "第一次已有足够结果时不要继续第二次检索" in BOOK_AGENT_SYSTEM_PROMPT
     assert "不要为了近义词" in BOOK_AGENT_SYSTEM_PROMPT
+    assert "后台自动扩展中英双语书目检索" in BOOK_AGENT_SYSTEM_PROMPT
+    assert "summary 和 reason 继续使用中文" in BOOK_AGENT_SYSTEM_PROMPT
 
 
 def test_agent_has_two_tool_call_limit_and_no_more() -> None:
