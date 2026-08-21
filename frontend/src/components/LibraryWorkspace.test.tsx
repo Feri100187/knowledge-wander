@@ -41,10 +41,12 @@ function WorkspaceHarness({
   root = false,
   agentPhase = "complete",
   agentError = null,
+  discovering = false,
 }: {
   root?: boolean;
   agentPhase?: BookAgentPhase;
   agentError?: string | null;
+  discovering?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<BookWorkspaceTab>("recommendations");
   const workspaceRef = useRef<HTMLElement>(null);
@@ -58,7 +60,7 @@ function WorkspaceHarness({
       onTabChange={setActiveTab}
       workspaceRef={workspaceRef}
       onDiscoverBooks={vi.fn()}
-      isDiscoveringBooks={false}
+      isDiscoveringBooks={discovering}
       books={[{ ...book, reason: "相关图书", relevance_score: 0.9 }]}
       bookError={null}
       onRetryBooks={vi.fn()}
@@ -95,6 +97,7 @@ describe("LibraryWorkspace public-book modes", () => {
     expect(recommendations?.hasAttribute("hidden")).toBe(false);
     expect(agent?.hasAttribute("hidden")).toBe(true);
     expect(search?.hasAttribute("hidden")).toBe(true);
+    expect(screen.getByRole("tab", { name: /相关图书/ }).className).toContain("tabActive");
     await waitFor(() => expect(screen.getAllByText("程序化叙事设计").length).toBeGreaterThan(0));
 
     fireEvent.click(screen.getByRole("tab", { name: /AI 选书/ }));
@@ -124,5 +127,17 @@ describe("LibraryWorkspace public-book modes", () => {
 
     expect(screen.getByText("图书检索未完成")).toBeTruthy();
     expect(screen.queryByText("实时执行中")).toBeNull();
+  });
+
+  it("keeps the loading text separate from the rotating spinner", () => {
+    render(<WorkspaceHarness discovering />);
+
+    const status = screen.getByRole("status");
+    const spinner = status.querySelector('[aria-hidden="true"]');
+    const text = screen.getByText("正在搜索图书……");
+
+    expect(spinner).toBeTruthy();
+    expect(text).not.toBe(spinner);
+    expect(spinner?.className).not.toBe(text.className);
   });
 });

@@ -109,9 +109,9 @@ function LibraryWorkspace({
       </div>
 
       {isDiscoveringBooks ? (
-        <div className={styles.libraryLoading} role="status">
-          <span aria-hidden="true" />
-          <span>正在公开图书数据库中寻找相关书籍……</span>
+        <div className={styles.libraryLoading} role="status" aria-live="polite">
+          <span className={styles.loadingSpinner} aria-hidden="true" />
+          <span className={styles.loadingText}>正在搜索图书……</span>
         </div>
       ) : bookError ? (
         <div className={styles.error} role="alert">
@@ -236,7 +236,7 @@ function LibraryWorkspace({
     <section ref={workspaceRef} className={workspaceStyles.workspace} aria-labelledby="book-workspace-heading">
       <header className={workspaceStyles.workspaceHeader}>
         <div className={workspaceStyles.workspaceTitleRow}>
-          <div>
+          <div className={workspaceStyles.workspaceTitle}>
             <h4 id="book-workspace-heading">图书探索</h4>
             <p>Open Library 主数据源 · Google Books fallback</p>
           </div>

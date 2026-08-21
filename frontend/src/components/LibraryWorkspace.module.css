@@ -23,18 +23,53 @@
   gap: 12px;
 }
 
+.workspaceTitle {
+  min-width: 0;
+}
+
 .workspaceTitleRow h4 {
   margin: 0;
   color: #8eefff;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
 .workspaceTitleRow p {
   margin: 5px 0 0;
   color: #8fa9ba;
   font-size: 0.72rem;
-  line-height: 1.5;
+  line-height: 1.45;
+}
+
+.connectionBadge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  min-height: 25px;
+  padding: 0 9px;
+  border: 1px solid rgba(119, 223, 246, 0.22);
+  border-radius: 999px;
+  color: #bdebf5;
+  background: rgba(14, 40, 58, 0.68);
+  font-size: 0.66rem;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.connectionBadge::first-letter {
+  color: #80edc5;
+}
+
+.connectionHint {
+  max-width: 42em;
+  margin: 0;
+  color: #718b9e;
+  font-size: 0.7rem;
+  line-height: 1.55;
 }
 
 .connected,
@@ -154,11 +189,12 @@
   background: rgba(119, 223, 246, 0.06);
 }
 
-.activeTab {
+.tabActive {
+  cursor: pointer;
   border-color: rgba(119, 223, 246, 0.24);
   color: #e8fbff;
-  background: linear-gradient(120deg, rgba(119, 223, 246, 0.14), rgba(156, 139, 255, 0.13));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: linear-gradient(120deg, rgba(35, 91, 119, 0.62), rgba(63, 54, 116, 0.64));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(119, 223, 246, 0.04);
 }
 
 .tabCount {
@@ -167,11 +203,25 @@
   height: 17px;
   place-items: center;
   padding: 0 4px;
+  border: 1px solid rgba(119, 223, 246, 0.14);
   border-radius: 999px;
   color: #bfeef8;
-  background: rgba(119, 223, 246, 0.12);
+  background: rgba(119, 223, 246, 0.08);
   font-size: 0.62rem;
   line-height: 1;
+}
+
+.tabActive .tabCount {
+  border-color: rgba(194, 237, 249, 0.24);
+  color: #f0ecff;
+  background: rgba(156, 139, 255, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.tab:focus-visible,
+.tabActive:focus-visible {
+  outline: 2px solid #8eefff;
+  outline-offset: 2px;
 }
 
 .singleTab {
@@ -305,6 +355,12 @@
 
   .workspaceTitleRow p {
     font-size: 0.68rem;
+  }
+
+  .connectionBadge {
+    min-height: 24px;
+    padding: 0 8px;
+    font-size: 0.62rem;
   }
 
   .tab,

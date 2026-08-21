@@ -563,6 +563,7 @@
 
 .libraryLoading {
   display: flex;
+  min-height: 44px;
   align-items: center;
   gap: 9px;
   padding: 10px 12px;
@@ -573,13 +574,21 @@
   font-size: 0.78rem;
 }
 
-.libraryLoading > span {
+.loadingSpinner {
+  display: block;
+  flex: 0 0 13px;
   width: 13px;
   height: 13px;
   border: 2px solid rgba(142, 239, 255, 0.22);
   border-top-color: #8eefff;
   border-radius: 50%;
   animation: librarySpin 800ms linear infinite;
+}
+
+.loadingText {
+  min-width: 0;
+  color: #c5e8f1;
+  line-height: 1.45;
 }
 
 .feedbackError {
@@ -630,7 +639,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .libraryLoading > span {
+  .loadingSpinner {
     animation: none;
   }
 
