@@ -80,13 +80,13 @@
   flex-wrap: wrap;
   gap: 12px 22px;
   margin: 0;
-  font-weight: 650;
+  font-weight: var(--font-weight-semibold);
   line-height: 1;
 }
 
 .heroChinese {
   font-size: clamp(3.2rem, 6vw, 5.6rem);
-  letter-spacing: -0.06em;
+  letter-spacing: 0;
   color: transparent;
   background: linear-gradient(90deg, #8eefff, #a991ff 65%, #f09bdc);
   background-clip: text;
@@ -96,7 +96,7 @@
 .heroEnglish {
   color: #e8f3fb;
   font-size: clamp(1.2rem, 2.2vw, 2rem);
-  font-weight: 560;
+  font-weight: var(--font-weight-medium);
   letter-spacing: -0.04em;
 }
 
@@ -139,8 +139,8 @@
 .sectionHeading h2 {
   margin-top: 8px;
   font-size: clamp(1.4rem, 2.2vw, 1.95rem);
-  font-weight: 580;
-  letter-spacing: -0.035em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
 }
 
 .topicExamples {
@@ -155,7 +155,7 @@
   margin-right: 2px;
   color: #718b9e;
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: var(--font-weight-medium);
 }
 
 .exampleButton {
@@ -194,7 +194,7 @@
   margin-bottom: 9px;
   color: #dcecf6;
   font-size: 0.88rem;
-  font-weight: 650;
+  font-weight: var(--font-weight-medium);
 }
 
 .fieldGroup input {
@@ -260,7 +260,7 @@
   margin-top: 7px;
   color: #9fb8c9;
   font-size: 0.76rem;
-  font-weight: 650;
+  font-weight: var(--font-weight-medium);
 }
 
 .exploreButton {
@@ -275,7 +275,7 @@
   color: #06131f;
   background: linear-gradient(100deg, #73e2f7, #9e8cff);
   box-shadow: 0 14px 34px rgba(74, 171, 221, 0.2);
-  font-weight: 750;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
 }
@@ -325,7 +325,7 @@
   place-items: center;
   border: 1px solid currentColor;
   border-radius: 50%;
-  font-weight: 800;
+  font-weight: var(--font-weight-bold);
 }
 
 .graphSection {
@@ -612,7 +612,7 @@
   background: rgba(6, 19, 32, 0.54);
   cursor: pointer;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: var(--font-weight-medium);
   transition: border-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
@@ -681,7 +681,7 @@
   background: rgba(6, 19, 32, 0.48);
   cursor: pointer;
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: var(--font-weight-medium);
   transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
 }
 
@@ -864,7 +864,7 @@
   background: rgba(119, 223, 246, 0.1);
   color: #c7e8f5;
   font-size: 0.74rem;
-  font-weight: 650;
+  font-weight: var(--font-weight-medium);
   border: 1px solid rgba(119, 223, 246, 0.16);
 }
 

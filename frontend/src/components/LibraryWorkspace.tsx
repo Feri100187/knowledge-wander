@@ -142,10 +142,10 @@ function LibraryWorkspace({
           />
         </>
       ) : books !== null ? (
-        <p className={styles.inlineEmpty}>暂未找到与当前知识节点相关的公开图书。</p>
+        <p className={workspaceStyles.inlineEmpty}>暂未找到与当前知识节点相关的公开图书。</p>
       ) : (
-        <div className={styles.inlineEmpty}>
-          <p>根据当前知识节点，从公开图书数据库中寻找相关书籍。</p>
+        <div className={workspaceStyles.inlineEmpty}>
+          <p className={workspaceStyles.bookActionDescription}>根据当前知识节点，从公开图书数据库中寻找相关书籍。</p>
           <button type="button" onClick={onDiscoverBooks} className={workspaceStyles.primaryButton}>
             发现相关图书
           </button>
@@ -204,8 +204,8 @@ function LibraryWorkspace({
           ) : null}
         </>
       ) : (
-        <div className={styles.inlineEmpty}>
-          <p>让 AI 分析当前知识路径，并从公开图书数据库中选择值得继续阅读的书。</p>
+        <div className={workspaceStyles.inlineEmpty}>
+          <p className={workspaceStyles.bookActionDescription}>让 AI 分析当前知识路径，并从公开图书数据库中选择值得继续阅读的书。</p>
           <button type="button" onClick={onBookAgent} className={workspaceStyles.primaryButton}>
             让 AI 继续选书
           </button>
@@ -238,9 +238,12 @@ function LibraryWorkspace({
         <div className={workspaceStyles.workspaceTitleRow}>
           <div className={workspaceStyles.workspaceTitle}>
             <h4 id="book-workspace-heading">图书探索</h4>
-            <p>Open Library 主数据源 · Google Books fallback</p>
+            <p>Open Library · Google Books fallback</p>
           </div>
-          <span className={workspaceStyles.connectionBadge}>● 公开 API</span>
+          <span className={workspaceStyles.connectionBadge}>
+            <span className={workspaceStyles.connectionDot} aria-hidden="true">●</span>
+            公开 API
+          </span>
         </div>
         <p className={workspaceStyles.connectionHint}>
           当前书目来自公开图书 API，不包含借阅或登录信息。

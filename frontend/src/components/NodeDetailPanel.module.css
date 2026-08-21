@@ -51,9 +51,9 @@
   border: 1px solid rgba(119, 223, 246, 0.22);
   border-radius: 999px;
   color: #77dff6;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -63,16 +63,17 @@
 
 .title {
   margin: 0;
-  font-size: 1.6rem;
-  font-weight: 620;
-  letter-spacing: -0.03em;
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
   line-height: 1.25;
 }
 
 .description {
   margin: 0;
-  color: #94abbc;
-  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-regular);
   line-height: 1.72;
 }
 
@@ -86,15 +87,16 @@
 .currentPath span {
   color: #77dff6;
   font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
 }
 
 .currentPath p {
   margin: 5px 0 0;
   overflow-wrap: anywhere;
-  color: #b9cbd8;
-  font-size: 0.76rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-regular);
   line-height: 1.55;
 }
 
@@ -111,13 +113,14 @@
 .connectionBox span {
   color: #bdb1ff;
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
 }
 
 .connectionBox p {
   margin: 0;
-  color: #bdced9;
-  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: var(--font-weight-regular);
   line-height: 1.65;
 }
 
@@ -176,7 +179,7 @@
   color: #06131f;
   background: linear-gradient(100deg, #73e2f7, #9e8cff);
   box-shadow: 0 10px 28px rgba(74, 171, 221, 0.2);
-  font-weight: 750;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
 }
@@ -237,20 +240,20 @@
   justify-content: space-between;
   gap: 16px;
   width: 100%;
-  height: 50px;
-  padding: 0 18px 0 20px;
+  height: 44px;
+  padding: 0 15px 0 16px;
   border: 1px solid rgba(119, 223, 246, 0.28);
   border-radius: 12px;
   color: #ccecf6;
   background: rgba(12, 42, 59, 0.68);
   box-shadow: inset 0 1px 0 rgba(206, 243, 255, 0.04);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, opacity 160ms ease;
 }
 
 .discoverButton:hover:not(:disabled) {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: rgba(119, 223, 246, 0.58);
   background: rgba(18, 61, 82, 0.82);
 }
@@ -266,20 +269,20 @@
   justify-content: space-between;
   gap: 16px;
   width: 100%;
-  min-height: 46px;
-  padding: 0 18px 0 20px;
+  min-height: 44px;
+  padding: 0 15px 0 16px;
   border: 1px solid rgba(169, 145, 255, 0.34);
   border-radius: 12px;
   color: #e5ddff;
   background: rgba(55, 44, 101, 0.48);
   box-shadow: inset 0 1px 0 rgba(237, 231, 255, 0.06);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, opacity 160ms ease;
 }
 
 .agentButton:hover:not(:disabled) {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: rgba(190, 174, 255, 0.66);
   background: rgba(74, 58, 132, 0.68);
 }
@@ -292,15 +295,15 @@
 .bookSection {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   border-top: 1px solid rgba(156, 212, 232, 0.14);
-  padding-top: 14px;
+  padding-top: 16px;
 }
 
 .bookSectionHeader {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
 }
 
 .bookTitleRow {
@@ -313,32 +316,37 @@
 .bookSectionTitle {
   margin: 0;
   color: #8eefff;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
 }
 
 .realtimeBadge {
   flex: 0 0 auto;
-  padding: 3px 8px;
-  border: 1px solid rgba(169, 145, 255, 0.28);
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid rgba(119, 223, 246, 0.24);
   border-radius: 999px;
-  color: #d4cbff;
-  background: rgba(74, 55, 131, 0.2);
-  font-size: 0.66rem;
-  font-weight: 700;
+  color: #bdebf5;
+  background: rgba(14, 54, 72, 0.42);
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
 }
 
 .bookSectionIntro {
   margin: 0;
-  color: #b9cbd8;
-  font-size: 0.76rem;
-  line-height: 1.58;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: var(--font-weight-regular);
+  line-height: 1.65;
 }
 
 .bookNotice {
-  color: #6f879a;
-  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-regular);
   line-height: 1.55;
 }
 
@@ -355,20 +363,23 @@
 .agentSection {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   border-top: 1px solid rgba(169, 145, 255, 0.2);
-  padding-top: 14px;
+  padding-top: 16px;
 }
 
 .agentBadge {
   flex: 0 0 auto;
-  padding: 3px 8px;
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
   border: 1px solid rgba(169, 145, 255, 0.34);
   border-radius: 999px;
   color: #e0d8ff;
   background: rgba(74, 55, 131, 0.24);
-  font-size: 0.66rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
 }
 
 .agentTrace {
@@ -395,7 +406,7 @@
 
 .agentTraceIndex {
   color: #a99aff;
-  font-weight: 800;
+  font-weight: var(--font-weight-bold);
 }
 
 .agentTrace li div {
@@ -408,6 +419,7 @@
 .agentTrace strong {
   color: #f0ecff;
   font-size: 0.74rem;
+  font-weight: var(--font-weight-semibold);
 }
 
 .agentTrace code {
@@ -430,7 +442,7 @@
 .bookTitle {
   color: #f4fbff;
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.35;
 }
 
@@ -451,8 +463,8 @@
   border-radius: 999px;
   color: #77dff6;
   font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
   background: rgba(14, 40, 58, 0.62);
 }
 
@@ -482,7 +494,7 @@
   margin-bottom: 4px;
   color: #bdb1ff;
   font-size: 0.68rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
 }
 
 .feedbackSection {
@@ -494,8 +506,8 @@
 .feedbackLabel {
   color: #8eefff;
   font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
 }
 
 .feedbackButtons {
@@ -517,7 +529,7 @@
   background: rgba(14, 40, 58, 0.62);
   color: #77dff6;
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
 }
@@ -545,7 +557,7 @@
   background: rgba(14, 40, 58, 0.86);
   color: #76ffa2;
   font-size: 0.76rem;
-  font-weight: 750;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   box-shadow: 0 0 0 3px rgba(118, 255, 162, 0.12);
 }
@@ -558,7 +570,7 @@
 .feedbackSaved {
   color: #80edc5;
   font-size: 0.7rem;
-  font-weight: 650;
+  font-weight: var(--font-weight-semibold);
 }
 
 .libraryLoading {
@@ -571,7 +583,8 @@
   border-radius: 10px;
   color: #b7dbe8;
   background: rgba(41, 113, 139, 0.1);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-regular);
 }
 
 .loadingSpinner {
@@ -616,8 +629,8 @@
 .bookFeedbackLabel {
   color: #8eefff;
   font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
 }
 
 @keyframes librarySpin {
@@ -658,8 +671,8 @@
 .realResultsHeader span {
   margin: 0;
   color: #8eefff;
-  font-size: 1rem;
-  font-weight: 750;
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-semibold);
 }
 
 .noResults {
@@ -684,7 +697,7 @@
 .bookSearchForm > label {
   color: #ccecf6;
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
 }
 
 .bookSearchRow {
@@ -720,7 +733,7 @@
   color: #06131f;
   background: #8eefff;
   font-size: 0.74rem;
-  font-weight: 750;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: transform 160ms ease, opacity 160ms ease;
 }
@@ -780,9 +793,9 @@
 
 .bookSourceBadge {
   align-self: flex-start;
-  color: #80edc5;
-  font-size: 0.64rem;
-  font-weight: 700;
+  color: #94d5c2;
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
 }
 
 .bookSubjectTags {
@@ -798,7 +811,8 @@
   border-radius: 999px;
   color: #b9c7f5;
   background: rgba(156, 139, 255, 0.08);
-  font-size: 0.64rem;
+  font-size: 0.68rem;
+  font-weight: var(--font-weight-medium);
   line-height: 1.2;
 }
 
@@ -813,15 +827,16 @@
 
 .bookReasonBlock > span {
   color: #c8c0ff;
-  font-size: 0.66rem;
-  font-weight: 750;
+  font-size: 0.72rem;
+  font-weight: var(--font-weight-semibold);
 }
 
 .bookReason {
   margin: 0;
-  color: #b6c3d2;
-  font-size: 0.72rem;
-  line-height: 1.55;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.6;
 }
 
 .bookLinks {
@@ -832,7 +847,8 @@
 
 .bookLinks a {
   color: #8eefff;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
+  font-weight: var(--font-weight-medium);
   text-decoration: none;
 }
 
@@ -849,31 +865,34 @@
 .realBookCard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 11px;
+  gap: 10px;
+  padding: 13px;
   border: 1px solid rgba(119, 223, 246, 0.15);
-  border-radius: 11px;
+  border-radius: 14px;
   background: rgba(4, 15, 27, 0.58);
 }
 
 .realBookCard h5 {
   margin: 0;
   color: #f4fbff;
-  font-size: 0.92rem;
-  font-weight: 700;
+  font-size: 0.96rem;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.4;
 }
 
 .realBookMeta,
 .realBookAbstract {
   margin: 0;
-  color: #9db5c5;
-  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-regular);
   line-height: 1.55;
 }
 
 .realBookAbstract {
-  color: #8199aa;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.65;
 }
 
 .realBookAbstractCollapsed {
@@ -889,7 +908,8 @@
   border: 0;
   color: #8eefff;
   background: transparent;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
 }
 
@@ -960,62 +980,5 @@
 .realResultsHeader strong {
   color: #80edc5;
   font-size: 0.72rem;
-}
-
-.realBookList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.realBookCard {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 11px;
-  border: 1px solid rgba(119, 223, 246, 0.15);
-  border-radius: 11px;
-  background: rgba(4, 15, 27, 0.58);
-}
-
-.realBookCard h5 {
-  margin: 0;
-  color: #f4fbff;
-  font-size: 0.92rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.realBookMeta,
-.realBookAbstract {
-  margin: 0;
-  color: #9db5c5;
-  font-size: 0.74rem;
-  line-height: 1.55;
-}
-
-.realBookAbstract {
-  color: #8199aa;
-}
-
-.realBookAbstractCollapsed {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
-}
-
-.abstractToggle {
-  align-self: flex-start;
-  padding: 0;
-  border: 0;
-  color: #8eefff;
-  background: transparent;
-  font-size: 0.68rem;
-  cursor: pointer;
-}
-
-.abstractToggle:hover {
-  color: #d8f8ff;
-  text-decoration: underline;
+  font-weight: var(--font-weight-semibold);
 }
