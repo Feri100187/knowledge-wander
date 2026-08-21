@@ -1,0 +1,1012 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 250px;
+  padding: 28px 20px;
+  color: #6f879a;
+  text-align: center;
+  gap: 16px;
+}
+
+.emptyIcon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 1px solid rgba(119, 223, 246, 0.23);
+  border-radius: 50%;
+  color: #8eefff;
+  background: radial-gradient(circle, rgba(119, 223, 246, 0.14), transparent 68%);
+  box-shadow: 0 0 0 8px rgba(119, 223, 246, 0.035);
+  font-size: 2rem;
+  opacity: 0.8;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+  padding-right: 2px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.domainBadge {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px solid rgba(119, 223, 246, 0.22);
+  border-radius: 999px;
+  color: #77dff6;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.domainBadge {
+  background: rgba(14, 40, 58, 0.62);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 620;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.description {
+  margin: 0;
+  color: #94abbc;
+  font-size: 0.88rem;
+  line-height: 1.72;
+}
+
+.currentPath {
+  padding: 9px 11px;
+  border: 1px solid rgba(119, 223, 246, 0.12);
+  border-radius: 10px;
+  background: rgba(7, 25, 39, 0.62);
+}
+
+.currentPath span {
+  color: #77dff6;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.currentPath p {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+  color: #b9cbd8;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.connectionBox {
+  padding: 14px;
+  border-left: 2px solid rgba(156, 139, 255, 0.68);
+  border-radius: 0 10px 10px 0;
+  background: linear-gradient(120deg, rgba(103, 78, 180, 0.16), rgba(31, 82, 112, 0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.connectionBox span {
+  color: #bdb1ff;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.connectionBox p {
+  margin: 0;
+  color: #bdced9;
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.scoreRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  color: #718b9e;
+  font-size: 0.72rem;
+}
+
+.scoreRow strong {
+  color: #d9f7ff;
+  font-size: 0.78rem;
+}
+
+.scoreTrack {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(130, 167, 184, 0.14);
+}
+
+.scoreTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #65dff5, #a28cff);
+}
+
+.rootHint {
+  margin: 0;
+  color: #6f879a;
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.continueButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  height: 50px;
+  padding: 0 18px 0 20px;
+  border: 1px solid rgba(197, 240, 255, 0.2);
+  border-radius: 12px;
+  color: #06131f;
+  background: linear-gradient(100deg, #73e2f7, #9e8cff);
+  box-shadow: 0 10px 28px rgba(74, 171, 221, 0.2);
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.continueButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(74, 171, 221, 0.3);
+}
+
+.continueButton:disabled,
+.continueButton.disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.arrow {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  font-size: 1rem;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 137, 153, 0.24);
+  border-radius: 10px;
+  color: #ffc0c9;
+  background: rgba(111, 31, 51, 0.22);
+  font-size: 0.82rem;
+}
+
+.retryButton {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 137, 153, 0.4);
+  border-radius: 6px;
+  color: #ffc0c9;
+  background: rgba(111, 31, 51, 0.34);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.retryButton:hover {
+  background: rgba(111, 31, 51, 0.56);
+}
+
+.discoverButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  height: 50px;
+  padding: 0 18px 0 20px;
+  border: 1px solid rgba(119, 223, 246, 0.28);
+  border-radius: 12px;
+  color: #ccecf6;
+  background: rgba(12, 42, 59, 0.68);
+  box-shadow: inset 0 1px 0 rgba(206, 243, 255, 0.04);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.discoverButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(119, 223, 246, 0.58);
+  background: rgba(18, 61, 82, 0.82);
+}
+
+.discoverButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.agentButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 18px 0 20px;
+  border: 1px solid rgba(169, 145, 255, 0.34);
+  border-radius: 12px;
+  color: #e5ddff;
+  background: rgba(55, 44, 101, 0.48);
+  box-shadow: inset 0 1px 0 rgba(237, 231, 255, 0.06);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.agentButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(190, 174, 255, 0.66);
+  background: rgba(74, 58, 132, 0.68);
+}
+
+.agentButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.bookSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(156, 212, 232, 0.14);
+  padding-top: 14px;
+}
+
+.bookSectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.bookTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bookSectionTitle {
+  margin: 0;
+  color: #8eefff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.realtimeBadge {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid rgba(169, 145, 255, 0.28);
+  border-radius: 999px;
+  color: #d4cbff;
+  background: rgba(74, 55, 131, 0.2);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.bookSectionIntro {
+  margin: 0;
+  color: #b9cbd8;
+  font-size: 0.76rem;
+  line-height: 1.58;
+}
+
+.bookNotice {
+  color: #6f879a;
+  font-size: 0.7rem;
+  line-height: 1.55;
+}
+
+.bookList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bookReveal {
+  animation: bookReveal 360ms cubic-bezier(0.22, 0.8, 0.3, 1) both;
+}
+
+.agentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid rgba(169, 145, 255, 0.2);
+  padding-top: 14px;
+}
+
+.agentBadge {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid rgba(169, 145, 255, 0.34);
+  border-radius: 999px;
+  color: #e0d8ff;
+  background: rgba(74, 55, 131, 0.24);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.agentTrace {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agentTrace li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(169, 145, 255, 0.16);
+  border-radius: 9px;
+  color: #c6bfff;
+  background: rgba(44, 34, 82, 0.22);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.agentTraceIndex {
+  color: #a99aff;
+  font-weight: 800;
+}
+
+.agentTrace li div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.agentTrace strong {
+  color: #f0ecff;
+  font-size: 0.74rem;
+}
+
+.agentTrace code {
+  overflow-wrap: anywhere;
+  color: #d8d0ff;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.7rem;
+}
+
+.bookCard {
+  padding: 12px;
+  border: 1px solid rgba(156, 212, 232, 0.12);
+  border-radius: 12px;
+  background: rgba(4, 15, 27, 0.54);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bookTitle {
+  color: #f4fbff;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.bookAuthor {
+  color: #8eefff;
+  font-size: 0.75rem;
+}
+
+.bookDomains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bookDomain {
+  padding: 2px 8px;
+  border: 1px solid rgba(119, 223, 246, 0.22);
+  border-radius: 999px;
+  color: #77dff6;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: rgba(14, 40, 58, 0.62);
+}
+
+.bookSummary {
+  margin: 0;
+  color: #94abbc;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.bookReason {
+  margin: 0;
+  color: #a8bed1;
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+.bookReasonBlock {
+  padding: 9px 10px;
+  border-left: 2px solid rgba(156, 139, 255, 0.54);
+  border-radius: 0 8px 8px 0;
+  background: rgba(103, 78, 180, 0.08);
+}
+
+.bookReasonBlock > span {
+  display: block;
+  margin-bottom: 4px;
+  color: #bdb1ff;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.feedbackSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feedbackLabel {
+  color: #8eefff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.feedbackButtons {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feedbackButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 78px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(119, 223, 246, 0.22);
+  background: rgba(14, 40, 58, 0.62);
+  color: #77dff6;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.feedbackButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(119, 223, 246, 0.6);
+}
+
+.feedbackButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.feedbackButtonActive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 78px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(118, 255, 162, 0.6);
+  background: rgba(14, 40, 58, 0.86);
+  color: #76ffa2;
+  font-size: 0.76rem;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(118, 255, 162, 0.12);
+}
+
+.feedbackButtonActive:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.feedbackSaved {
+  color: #80edc5;
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.libraryLoading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid rgba(119, 223, 246, 0.14);
+  border-radius: 10px;
+  color: #b7dbe8;
+  background: rgba(41, 113, 139, 0.1);
+  font-size: 0.78rem;
+}
+
+.libraryLoading > span {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(142, 239, 255, 0.22);
+  border-top-color: #8eefff;
+  border-radius: 50%;
+  animation: librarySpin 800ms linear infinite;
+}
+
+.feedbackError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 137, 153, 0.24);
+  border-radius: 10px;
+  color: #ffc0c9;
+  background: rgba(111, 31, 51, 0.22);
+  font-size: 0.72rem;
+}
+
+.bookFeedback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid rgba(156, 212, 232, 0.14);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.bookFeedbackLabel {
+  color: #8eefff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+@keyframes librarySpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bookReveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .libraryLoading > span {
+    animation: none;
+  }
+
+  .bookReveal {
+    animation: none;
+  }
+}
+
+.realResultsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.realResultsHeader span {
+  margin: 0;
+  color: #8eefff;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.noResults {
+  margin: 0;
+  color: #c2d0da;
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.bookSearchSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bookSearchForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bookSearchForm > label {
+  color: #ccecf6;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.bookSearchRow {
+  display: flex;
+  gap: 8px;
+}
+
+.bookSearchRow input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  min-width: 0;
+  border: 1px solid rgba(157, 202, 221, 0.2);
+  border-radius: 9px;
+  outline: none;
+  color: #effaff;
+  background: rgba(4, 15, 27, 0.72);
+  font-size: 0.78rem;
+}
+
+.bookSearchRow input:focus {
+  border-color: rgba(103, 220, 244, 0.7);
+  box-shadow: 0 0 0 3px rgba(88, 202, 231, 0.09);
+}
+
+.bookSearchRow button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(119, 223, 246, 0.3);
+  border-radius: 9px;
+  color: #06131f;
+  background: #8eefff;
+  font-size: 0.74rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.bookSearchRow button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.bookSearchRow button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.bookError {
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 137, 153, 0.24);
+  border-radius: 9px;
+  color: #ffc0c9;
+  background: rgba(111, 31, 51, 0.22);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.bookCardTopline {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.bookCover,
+.bookCoverPlaceholder {
+  flex: 0 0 52px;
+  width: 52px;
+  height: 72px;
+  border-radius: 6px;
+}
+
+.bookCover {
+  object-fit: cover;
+  background: rgba(119, 223, 246, 0.08);
+}
+
+.bookCoverPlaceholder {
+  display: grid;
+  place-items: center;
+  color: #8eefff;
+  background: linear-gradient(145deg, rgba(119, 223, 246, 0.2), rgba(156, 139, 255, 0.2));
+  font-size: 1.3rem;
+}
+
+.bookCardHeading {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bookSourceBadge {
+  align-self: flex-start;
+  color: #80edc5;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.bookSubjectTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.bookSubjectTags span {
+  max-width: 100%;
+  padding: 3px 6px;
+  border: 1px solid rgba(156, 139, 255, 0.2);
+  border-radius: 999px;
+  color: #b9c7f5;
+  background: rgba(156, 139, 255, 0.08);
+  font-size: 0.64rem;
+  line-height: 1.2;
+}
+
+.bookReasonBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 9px;
+  border-left: 2px solid rgba(156, 139, 255, 0.62);
+  background: rgba(156, 139, 255, 0.06);
+}
+
+.bookReasonBlock > span {
+  color: #c8c0ff;
+  font-size: 0.66rem;
+  font-weight: 750;
+}
+
+.bookReason {
+  margin: 0;
+  color: #b6c3d2;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.bookLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bookLinks a {
+  color: #8eefff;
+  font-size: 0.68rem;
+  text-decoration: none;
+}
+
+.bookLinks a:hover {
+  text-decoration: underline;
+}
+
+.realBookList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.realBookCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 11px;
+  border: 1px solid rgba(119, 223, 246, 0.15);
+  border-radius: 11px;
+  background: rgba(4, 15, 27, 0.58);
+}
+
+.realBookCard h5 {
+  margin: 0;
+  color: #f4fbff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.realBookMeta,
+.realBookAbstract {
+  margin: 0;
+  color: #9db5c5;
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.realBookAbstract {
+  color: #8199aa;
+}
+
+.realBookAbstractCollapsed {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+}
+
+.abstractToggle {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  color: #8eefff;
+  background: transparent;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.abstractToggle:hover {
+  color: #d8f8ff;
+  text-decoration: underline;
+}
+
+.bookSearchSection .realResults {
+  margin-top: 4px;
+}
+
+.bookSearchSection .realBookCard {
+  background: rgba(4, 15, 27, 0.42);
+}
+
+.realBookCard .bookFeedback {
+  margin-top: 0;
+}
+
+.bookSearchRow input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bookSearchRow button {
+  border: 1px solid rgba(119, 223, 246, 0.3);
+  color: #06131f;
+  background: #8eefff;
+}
+
+.bookSearchRow button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.bookSearchRow button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.bookSearchRow button:focus-visible,
+.bookSearchRow input:focus-visible,
+.bookLinks a:focus-visible,
+.abstractToggle:focus-visible {
+  outline: 2px solid #8eefff;
+  outline-offset: 2px;
+}
+
+.bookSearchRow button {
+  min-height: 38px;
+  border: 1px solid rgba(119, 223, 246, 0.3);
+  color: #06131f;
+  background: #8eefff;
+}
+
+.realResults {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border-top: 1px solid rgba(119, 223, 246, 0.12);
+  padding-top: 12px;
+}
+
+.realResultsHeader {
+  align-items: center;
+}
+
+.realResultsHeader strong {
+  color: #80edc5;
+  font-size: 0.72rem;
+}
+
+.realBookList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.realBookCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 11px;
+  border: 1px solid rgba(119, 223, 246, 0.15);
+  border-radius: 11px;
+  background: rgba(4, 15, 27, 0.58);
+}
+
+.realBookCard h5 {
+  margin: 0;
+  color: #f4fbff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.realBookMeta,
+.realBookAbstract {
+  margin: 0;
+  color: #9db5c5;
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.realBookAbstract {
+  color: #8199aa;
+}
+
+.realBookAbstractCollapsed {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+}
+
+.abstractToggle {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  color: #8eefff;
+  background: transparent;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.abstractToggle:hover {
+  color: #d8f8ff;
+  text-decoration: underline;
+}

@@ -1,0 +1,75 @@
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(169, 145, 255, 0.16);
+  border-radius: 9px;
+  color: #c6bfff;
+  background: rgba(44, 34, 82, 0.22);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.timeline li.active {
+  border-color: rgba(142, 239, 255, 0.26);
+  color: #ccecf6;
+  background: rgba(25, 76, 96, 0.18);
+}
+
+.timeline li.error {
+  border-color: rgba(255, 137, 153, 0.26);
+  color: #ffc0c9;
+  background: rgba(111, 31, 51, 0.18);
+}
+
+.marker {
+  color: #a99aff;
+  font-weight: 800;
+}
+
+.active .marker {
+  color: #8eefff;
+}
+
+.error .marker {
+  color: #ff9eab;
+}
+
+.timeline li div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeline strong {
+  color: #f0ecff;
+  font-size: 0.74rem;
+}
+
+.timeline span {
+  overflow-wrap: anywhere;
+}
+
+.timeline code {
+  overflow-wrap: anywhere;
+  color: #d8d0ff;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.7rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline li {
+    transition: none;
+  }
+}

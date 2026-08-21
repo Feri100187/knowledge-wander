@@ -1,0 +1,118 @@
+.status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(119, 223, 246, 0.13);
+  border-radius: 11px;
+  color: #a9c7d8;
+  background: rgba(11, 34, 49, 0.46);
+}
+
+.status.active {
+  border-color: rgba(119, 223, 246, 0.24);
+  background: rgba(18, 67, 82, 0.22);
+}
+
+.status.complete {
+  animation: statusFade 2.2s ease 1.2s both;
+}
+
+.status.error {
+  border-color: rgba(255, 137, 153, 0.24);
+  color: #ffc0c9;
+  background: rgba(111, 31, 51, 0.2);
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #66e6bd;
+  box-shadow: 0 0 0 4px rgba(102, 230, 189, 0.1);
+}
+
+.active .dot {
+  animation: statusPulse 1.8s ease-in-out infinite;
+}
+
+.error .dot {
+  background: #ff9eab;
+  box-shadow: 0 0 0 4px rgba(255, 158, 171, 0.1);
+}
+
+.copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.copy strong {
+  overflow-wrap: anywhere;
+  color: #dcecf6;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.copy span {
+  overflow-wrap: anywhere;
+  color: #718b9e;
+  font-size: 0.7rem;
+}
+
+.error .copy strong {
+  color: #ffc0c9;
+}
+
+.retryButton {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 137, 153, 0.36);
+  border-radius: 7px;
+  color: #ffc0c9;
+  background: rgba(111, 31, 51, 0.32);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+@keyframes statusPulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes statusFade {
+  to {
+    opacity: 0.42;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status.complete {
+    animation: none;
+  }
+
+  .active .dot {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .status {
+    align-items: flex-start;
+  }
+
+  .retryButton {
+    margin-left: auto;
+  }
+}

@@ -1,0 +1,340 @@
+.workspace {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(119, 223, 246, 0.18);
+  scroll-margin-top: 16px;
+}
+
+.workspaceHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workspaceTitleRow {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workspaceTitleRow h4 {
+  margin: 0;
+  color: #8eefff;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.workspaceTitleRow p {
+  margin: 5px 0 0;
+  color: #8fa9ba;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.connected,
+.disconnected {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.connected {
+  border: 1px solid rgba(102, 230, 189, 0.34);
+  color: #80edc5;
+  background: rgba(30, 104, 88, 0.2);
+}
+
+.disconnected {
+  border: 1px solid rgba(255, 202, 124, 0.3);
+  color: #ffd58f;
+  background: rgba(120, 78, 26, 0.18);
+}
+
+.connectionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid rgba(255, 202, 124, 0.18);
+  border-radius: 10px;
+  background: rgba(89, 61, 27, 0.12);
+}
+
+.connectionBlock p {
+  margin: 0;
+  color: #c2d0da;
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.connectionActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 34px;
+  padding: 0 11px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.primaryButton {
+  border: 1px solid rgba(255, 218, 151, 0.32);
+  color: #221507;
+  background: linear-gradient(100deg, #ffd68e, #f4a7ce);
+}
+
+.secondaryButton {
+  border: 1px solid rgba(119, 223, 246, 0.25);
+  color: #bdebf5;
+  background: rgba(12, 42, 59, 0.7);
+}
+
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(119, 223, 246, 0.13);
+  border-radius: 11px;
+  background: rgba(4, 15, 27, 0.54);
+}
+
+.tab,
+.singleTab {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #7894a6;
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.tab {
+  cursor: pointer;
+  transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.tab:hover {
+  color: #ccecf6;
+  background: rgba(119, 223, 246, 0.06);
+}
+
+.activeTab {
+  border-color: rgba(119, 223, 246, 0.24);
+  color: #e8fbff;
+  background: linear-gradient(120deg, rgba(119, 223, 246, 0.14), rgba(156, 139, 255, 0.13));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.tabCount {
+  display: inline-grid;
+  min-width: 17px;
+  height: 17px;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  color: #bfeef8;
+  background: rgba(119, 223, 246, 0.12);
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.singleTab {
+  justify-content: flex-start;
+  padding-left: 12px;
+  border-color: rgba(119, 223, 246, 0.18);
+  color: #e8fbff;
+  background: linear-gradient(120deg, rgba(119, 223, 246, 0.1), rgba(156, 139, 255, 0.1));
+}
+
+.tabPanel {
+  min-width: 0;
+}
+
+.tabPanel[hidden] {
+  display: none;
+}
+
+.activePanel {
+  animation: tabEnter 220ms ease both;
+}
+
+.tabContent {
+  min-width: 0;
+}
+
+.emptyState {
+  display: flex;
+  min-height: 154px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 16px;
+  border: 1px dashed rgba(119, 223, 246, 0.19);
+  border-radius: 12px;
+  color: #9db5c5;
+  text-align: center;
+  background: rgba(4, 15, 27, 0.3);
+}
+
+.emptyState p {
+  max-width: 30em;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+.emptyIcon {
+  color: #8eefff;
+  font-size: 1.25rem;
+  opacity: 0.78;
+}
+
+.emptyState button,
+.retryButton {
+  min-height: 34px;
+  padding: 0 11px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.emptyState button {
+  border: 1px solid rgba(119, 223, 246, 0.3);
+  color: #06131f;
+  background: #8eefff;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid rgba(255, 137, 153, 0.24);
+  border-radius: 9px;
+  color: #ffc0c9;
+  background: rgba(111, 31, 51, 0.22);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.error > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.retryButton {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 137, 153, 0.4);
+  color: #ffc0c9;
+  background: rgba(111, 31, 51, 0.34);
+}
+
+.retryButton:hover {
+  background: rgba(111, 31, 51, 0.56);
+}
+
+.inlineEmpty {
+  margin: 0;
+  padding: 12px;
+  border-radius: 9px;
+  color: #91a9b9;
+  background: rgba(4, 15, 27, 0.36);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+@keyframes tabEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .workspaceTitleRow {
+    gap: 8px;
+  }
+
+  .workspaceTitleRow h4 {
+    font-size: 0.94rem;
+  }
+
+  .workspaceTitleRow p {
+    font-size: 0.68rem;
+  }
+
+  .tab,
+  .singleTab {
+    min-height: 34px;
+    padding: 0 4px;
+    font-size: 0.66rem;
+  }
+
+  .tabCount {
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    font-size: 0.58rem;
+  }
+
+  .error {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .primaryButton,
+  .secondaryButton {
+    transition: none;
+  }
+
+  .activePanel {
+    animation: none;
+  }
+}
