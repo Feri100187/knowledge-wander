@@ -39,7 +39,7 @@ Knowledge Wander 尝试做相反的事情：
 - **Architecture：** [docs/architecture.md](docs/architecture.md)；
 - **Tracks：** OpenAtom = Meaningful Serendipity；Public Book APIs = Knowledge Path → Verified Reading Discovery；Feedback Memory Agent = Feedback → Memory → Automatic Retrieval → Personalized Exploration；
 - **Demo：** [3 分钟演示脚本](docs/demo-script.md) · [60–90 秒视频脚本与 Shot List](docs/demo-video-script.md)；
-- **Delivery：** Deployed / Online Demo Available；当前版本已部署至 Render，可通过 Live Demo 直接体验；Demo video script prepared，视频尚待人工录制。
+- **Delivery：** Render deployment configured; latest public-book build pending production re-validation；Demo video script prepared，视频尚待人工录制。
 
 ---
 
@@ -937,7 +937,7 @@ LLM_REASONING_EFFORT=
 - 公开 API 的简介、封面与预览链接由数据源决定，缺失时保持为空；
 - 项目不提供购买、借阅或全文访问能力；
 - 当前在线 Demo 的 Feedback / Memory 使用 SQLite；如果 Render Backend 未配置 Persistent Disk，实例重新部署、文件系统被替换或其他非持久化环境变化可能导致数据丢失；
-- 当前版本已部署至 Render，在线 Demo 可用；
+- 当前已配置 Render 部署，最新公开图书 API 版本将在本地全绿后重新部署并验证；
 - Demo video script 已准备，视频尚待人工录制。
 
 Milestone 8 为最终开发阶段。未经新的明确指令，不进入新的产品开发 Milestone。
