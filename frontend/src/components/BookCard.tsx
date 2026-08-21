@@ -37,18 +37,31 @@ export default function BookCard({
   onRetryBookFeedback?: () => void;
 }) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null);
   const isbn = isbnLabel(book);
   const hasFeedback = Boolean(onBookFeedback);
+  const coverUrl = book.cover_url?.trim() || null;
 
   return (
     <article className={styles.realBookCard}>
       <div className={styles.bookCardTopline}>
-        {book.cover_url ? (
+        {coverUrl && coverUrl !== failedCoverUrl ? (
           // Public providers return dynamic cover hosts, so use a plain image element.
           // eslint-disable-next-line @next/next/no-img-element
-          <img className={styles.bookCover} src={book.cover_url} alt={`《${book.title}》封面`} />
+          <img
+            className={styles.bookCover}
+            src={coverUrl}
+            alt={`${book.title} 封面`}
+            onError={() => {
+              if (coverUrl) {
+                setFailedCoverUrl(coverUrl);
+              }
+            }}
+          />
         ) : (
-          <div className={styles.bookCoverPlaceholder} aria-hidden="true">▧</div>
+          <div className={styles.bookCoverPlaceholder} role="img" aria-label="暂无封面">
+            <span className={styles.bookCoverPlaceholderMark} aria-hidden="true">BOOK</span>
+          </div>
         )}
         <div className={styles.bookCardHeading}>
           <h5>{book.title}</h5>
