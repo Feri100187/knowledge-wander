@@ -180,15 +180,15 @@ def test_agent_executes_search_books_and_only_returns_verified_ids() -> None:
     assert "程序化叙事设计" in llm.calls[1][0][-1]["content"]
 
 
-def test_one_agent_tool_call_runs_internal_bilingual_search() -> None:
+def test_one_agent_tool_call_runs_internal_english_only_search() -> None:
     real_book = book("english", "Criminal Psychology", language="en")
     agent_llm = FakeLLM([
         tool_response("call-1", "犯罪心理学"),
         final_response({"book_id": real_book.id, "reason": "来自公开工具结果。"}),
     ])
     term_llm = FixedSearchTermLLM("criminal psychology")
-    open_library = QueryProvider({"犯罪心理学": [], "criminal psychology": [real_book]})
-    google = QueryProvider({"犯罪心理学": [], "criminal psychology": []})
+    open_library = QueryProvider({"criminal psychology": [real_book]})
+    google = QueryProvider({"criminal psychology": []})
     book_service = PublicBookService(
         PublicBookSearchService(
             open_library,
@@ -205,7 +205,7 @@ def test_one_agent_tool_call_runs_internal_bilingual_search() -> None:
     assert response.queries == ["犯罪心理学"]
     assert response.books[0].book.id == real_book.id
     assert term_llm.calls == 1
-    assert [call["query"] for call in open_library.calls] == ["犯罪心理学", "criminal psychology"]
+    assert [call["query"] for call in open_library.calls] == ["criminal psychology"]
     assert len(agent_llm.calls) == 2
 
 
@@ -226,7 +226,8 @@ def test_unknown_final_id_is_discarded_and_prompt_requires_verified_selection() 
     assert "所有具体书名、作者、ISBN" in BOOK_AGENT_SYSTEM_PROMPT
     assert "第一次已有足够结果时不要继续第二次检索" in BOOK_AGENT_SYSTEM_PROMPT
     assert "不要为了近义词" in BOOK_AGENT_SYSTEM_PROMPT
-    assert "后台自动扩展中英双语书目检索" in BOOK_AGENT_SYSTEM_PROMPT
+    assert "只向公开图书数据库发送英文 query" in BOOK_AGENT_SYSTEM_PROMPT
+    assert "禁止对完全相同的 query 重复调用" in BOOK_AGENT_SYSTEM_PROMPT
     assert "summary 和 reason 继续使用中文" in BOOK_AGENT_SYSTEM_PROMPT
 
 
@@ -249,6 +250,26 @@ def test_agent_has_two_tool_call_limit_and_no_more() -> None:
     assert len(service.calls) == 2
     assert len(llm.calls) == 3
     assert "tools" not in llm.calls[-1][1]
+
+
+def test_agent_reuses_result_for_duplicate_tool_query_without_second_service_call() -> None:
+    real_book = book("duplicate", "Duplicate query result")
+    llm = FakeLLM([
+        tool_response("call-1", "游戏关卡策划"),
+        tool_response("call-2", "  游戏关卡策划  "),
+        final_response({"book_id": real_book.id, "reason": "来自已验证结果。"}),
+    ])
+    service = FakeBookService({
+        "游戏关卡策划": search("游戏关卡策划", [real_book]),
+    })
+
+    response = run(BookAgent(llm_service=llm, book_service=service).discover(request()))
+
+    assert response.books[0].book.id == real_book.id
+    assert response.tool_calls == 2
+    assert len(service.calls) == 1
+    assert [query for query in response.queries] == ["游戏关卡策划"]
+    assert response.tool_trace[1].duration_ms == 0.0
 
 
 def test_book_source_error_propagates_without_agent_inventing_data() -> None:

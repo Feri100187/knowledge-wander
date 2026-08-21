@@ -117,32 +117,55 @@ class PublicBookSearchService:
         if page < 1 or limit < 1 or limit > 20:
             raise BookServiceError("INVALID_RESPONSE", message="图书检索分页参数无效。")
 
-        key = self._cache_key(normalized_query, page, limit, language)
         terms = await self.query_builder.build(normalized_query)
+        primary_query = terms.primary_english_query
+        if not primary_query:
+            raise BookServiceError(
+                "BOOK_QUERY_UNAVAILABLE",
+                reason="english_query_unavailable",
+            )
+
+        key = self._cache_key(
+            primary_query,
+            terms.fallback_english_query,
+            page,
+            limit,
+            language,
+        )
         cached = self._get_cached(key)
         if cached is not None:
-            logger.info("Public book search cache hit query_length=%d", len(normalized_query))
-            return cached, terms
+            logger.info(
+                "Public book search cache hit english_query_length=%d",
+                len(primary_query),
+            )
+            return cached.model_copy(update={"query": normalized_query}), terms
 
-        search_queries = [(terms.original_query, language)]
-        if terms.english_query and terms.english_query.casefold() != terms.original_query.casefold():
-            search_queries.append((terms.english_query, ENGLISH_BOOK_QUERY_LANGUAGE))
+        search_queries = [primary_query]
+        if (
+            terms.fallback_english_query
+            and terms.fallback_english_query.casefold() != primary_query.casefold()
+        ):
+            search_queries.append(terms.fallback_english_query)
 
         all_books: list[PublicBook] = []
-        query_result_counts: dict[str, int] = {"original": 0, "english": 0}
+        query_result_counts: dict[str, int] = {"primary": 0, "fallback": 0}
         attempts = 0
         failures = 0
-        for query_index, (search_query, search_language) in enumerate(search_queries):
+        for query_index, search_query in enumerate(search_queries):
             outcome = await self._search_query_with_fallback(
                 search_query,
                 page=page,
                 limit=limit,
-                language=search_language,
+                language=ENGLISH_BOOK_QUERY_LANGUAGE,
             )
             all_books.extend(outcome.books)
             attempts += outcome.attempts
             failures += outcome.failures
-            query_result_counts["english" if query_index else "original"] = len(outcome.books)
+            query_result_counts["fallback" if query_index else "primary"] = len(outcome.books)
+
+            merged_count = len(_merge_books([], all_books))
+            if query_index == 0 and merged_count >= OPEN_LIBRARY_FALLBACK_THRESHOLD:
+                break
 
         if not all_books and attempts > 0 and failures == attempts:
             raise BookServiceError(
@@ -152,12 +175,14 @@ class PublicBookSearchService:
 
         books = _rank_search_books(_merge_books([], all_books), terms)
         logger.info(
-            "Public book bilingual search completed original_query_length=%d "
-            "english_query_generated=%s original_result_count=%d english_result_count=%d merged_count=%d",
+            "Public book english-only search completed original_query_length=%d "
+            "primary_query_length=%d fallback_query_generated=%s primary_result_count=%d "
+            "fallback_result_count=%d merged_count=%d",
             len(normalized_query),
-            bool(terms.english_query),
-            query_result_counts["original"],
-            query_result_counts["english"],
+            len(primary_query),
+            bool(terms.fallback_english_query),
+            query_result_counts["primary"],
+            query_result_counts["fallback"],
             len(books),
         )
         response = BookSearchResponse(
@@ -227,13 +252,20 @@ class PublicBookSearchService:
 
     def _cache_key(
         self,
-        query: str,
+        primary_query: str,
+        fallback_query: str | None,
         page: int,
         limit: int,
         language: str | None,
     ) -> str:
         return "|".join(
-            (query.casefold(), str(page), str(limit), (language or "").strip().casefold())
+            (
+                primary_query.casefold(),
+                (fallback_query or "").casefold(),
+                str(page),
+                str(limit),
+                (language or "").strip().casefold(),
+            )
         )
 
     def _get_cached(self, key: str) -> BookSearchResponse | None:
@@ -283,18 +315,34 @@ class PublicBookService:
         last_query = queries[-1]
         search_result: BookSearchResponse | None = None
         search_terms: BookSearchTerms | None = None
+        query_error: BookServiceError | None = None
         for query in queries:
-            search_result, search_terms = await self.search_service.search_books_with_terms(
-                query,
-                page=1,
-                limit=20,
-                language=request.language,
-            )
             last_query = query
+            try:
+                search_result, search_terms = await self.search_service.search_books_with_terms(
+                    query,
+                    page=1,
+                    limit=20,
+                    language=request.language,
+                )
+            except BookServiceError as error:
+                if error.code != "BOOK_QUERY_UNAVAILABLE":
+                    raise
+                query_error = error
+                continue
             if search_result.books:
                 break
 
         if search_result is None or not search_result.books:
+            if search_result is None and query_error is not None:
+                return BookRecommendResponse(
+                    data_source=PUBLIC_BOOK_DATA_SOURCE,
+                    data_notice=PUBLIC_BOOK_DATA_NOTICE,
+                    query=last_query,
+                    books=[],
+                    error_code=query_error.code,
+                    message=query_error.public_message,
+                )
             return BookRecommendResponse(
                 data_source=PUBLIC_BOOK_DATA_SOURCE,
                 data_notice=PUBLIC_BOOK_DATA_NOTICE,
@@ -353,6 +401,38 @@ def _match_book(
     searchable_subjects = " ".join(book.subjects)
     searchable_description = book.description or ""
     searchable_authors = " ".join(book.authors)
+
+    if search_terms:
+        display_query = next(
+            (
+                query
+                for query in (
+                    request.node_label,
+                    request.node_domain,
+                    request.root_topic,
+                )
+                if query.strip().casefold() == search_terms.original_query.casefold()
+            ),
+            request.node_label,
+        )
+        retrieval_queries = [
+            query
+            for query in (
+                search_terms.primary_english_query,
+                search_terms.fallback_english_query,
+            )
+            if query
+        ]
+        for retrieval_query in retrieval_queries:
+            if _contains(book.title, retrieval_query):
+                return 1.0, display_query, "title"
+            if _contains(searchable_subjects, retrieval_query):
+                return 0.85, display_query, "subject"
+            if _contains(searchable_description, retrieval_query):
+                return 0.75, display_query, "description"
+            if _contains(searchable_authors, retrieval_query):
+                return 0.6, display_query, "author"
+
     for query, weight in candidates:
         if _contains(book.title, query):
             return weight, query, "title"
@@ -366,28 +446,6 @@ def _match_book(
         if _contains(searchable_authors, query):
             return round(weight * 0.6, 4), query, "author"
 
-    if search_terms and search_terms.english_query:
-        display_query = next(
-            (
-                query
-                for query in (
-                    request.node_label,
-                    request.node_domain,
-                    request.root_topic,
-                )
-                if query.strip().casefold() == search_terms.original_query.casefold()
-            ),
-            request.node_label,
-        )
-        english_query = search_terms.english_query
-        if _contains(book.title, english_query):
-            return 1.0, display_query, "title"
-        if _contains(searchable_subjects, english_query):
-            return 0.85, display_query, "subject"
-        if _contains(searchable_description, english_query):
-            return 0.75, display_query, "description"
-        if _contains(searchable_authors, english_query):
-            return 0.6, display_query, "author"
     return 0.35, None, None
 
 
@@ -469,16 +527,21 @@ def _rank_search_books(books: list[PublicBook], terms: BookSearchTerms) -> list[
 
 
 def _book_search_relevance(book: PublicBook, terms: BookSearchTerms) -> float:
-    queries = [terms.original_query]
-    if terms.english_query:
-        queries.append(terms.english_query)
+    queries = [
+        query
+        for query in (
+            terms.primary_english_query,
+            terms.fallback_english_query,
+        )
+        if query
+    ]
+    if not queries:
+        return 0.0
     relevance = max(_query_match_score(book, query) for query in queries)
 
     language = (book.language or "").casefold()
-    if terms.english_query and language in {"en", "eng", "english"}:
+    if language in {"en", "eng", "english"}:
         relevance += 0.03
-    elif _contains_cjk_text(terms.original_query) and language in {"zh", "chi", "zho", "cmn", "chinese"}:
-        relevance += 0.02
 
     year = _year_value(book)
     if year:
@@ -519,10 +582,6 @@ def _token_coverage(tokens: list[str], value: str) -> float:
 
 def _normalize_search_text(value: str) -> str:
     return re.sub(r"[^\w]+", " ", value.casefold(), flags=re.UNICODE).strip()
-
-
-def _contains_cjk_text(value: str) -> bool:
-    return bool(re.search(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]", value))
 
 
 def _dedupe_key(book: PublicBook) -> str:

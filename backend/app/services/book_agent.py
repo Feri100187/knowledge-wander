@@ -70,13 +70,14 @@ BOOK_AGENT_SYSTEM_PROMPT = """你是 Knowledge Wander 的公开图书探索智�
 规则：
 1. 所有具体书名、作者、ISBN、出版社、出版年份和简介必须来自 search_books 工具结果。
 2. 不得凭记忆虚构书目，不得把工具没有返回的信息补写成事实。
-3. 搜索词应简洁，优先 2~12 个汉字或必要的英文术语，不要搜索完整自然语言问题。
+3. 搜索词应简洁，优先使用当前知识概念（通常是 2~12 个汉字或必要的英文术语），不要搜索完整自然语言问题。
 4. 根据 root topic、node、domain 和 current path 判断最有效的检索概念。
 5. 最多调用 search_books 两次。第一次返回 0~2 条候选，或结果明显与当前知识节点不相关时，才使用第二次。
 6. 第一次已有足够结果时不要继续第二次检索；如果第一次已经返回 >=5 条合适的真实书目，应直接从现有结果完成推荐，不要为了近义词、覆盖率或“看看有没有更好结果”再次检索。
-7. 一次 search_books 会在后台自动扩展中英双语书目检索；不要为了英文版本或翻译结果另行调用一次 search_books。
-8. 最终只从已验证的 book id 中选择最多 4 本书。
-9. 面向用户的 summary 和 reason 继续使用中文；书名、作者等真实书目元数据保持工具返回的原文。
+7. 对中文概念，search_books 会在后台生成英文检索词，并且只向公开图书数据库发送英文 query；一次工具调用内部可能使用一个英文 fallback，但这不算新的工具调用。不要为了英文版本另行调用 search_books。
+8. 禁止对完全相同的 query 重复调用 search_books；如果确实需要第二次搜索，必须换成语义不同的概念，而不是原 query 的重复提交。
+9. 最终只从已验证的 book id 中选择最多 4 本书。
+10. 面向用户的 summary 和 reason 继续使用中文；书名、作者等真实书目元数据保持工具返回的原文。
 
 最终只输出 JSON：
 {"summary":"...","recommendations":[{"book_id":"真实工具结果中的 ID","reason":"..."}]}
@@ -87,6 +88,10 @@ FINAL_JSON_INSTRUCTION = (
     "现在只返回严格 JSON，不要 Markdown 或其他文字。字段必须是 summary 和 "
     "recommendations；每个 recommendation 只能包含 book_id 和 reason。"
 )
+
+
+def _normalize_tool_query(value: str) -> str:
+    return " ".join(value.casefold().split())
 
 
 class BookAgent:
@@ -132,6 +137,7 @@ class BookAgent:
         valid_books: dict[str, PublicBook] = {}
         traces: list[BookAgentToolTrace] = []
         queries: list[str] = []
+        tool_results_by_query: dict[str, BookSearchResponse | BookServiceError] = {}
         llm_rounds = 0
         tool_rounds = 0
 
@@ -212,24 +218,51 @@ class BookAgent:
                     on_event,
                     {"type": "tool_call", "tool": "search_books", "query": args.query},
                 )
-                tool_started_at = time.perf_counter()
-                search_result = await self._get_book_service().search_books(
-                    args.query,
-                    page=1,
-                    limit=args.limit,
-                    language=args.language,
-                )
-                try:
-                    normalized_result = (
-                        search_result
-                        if isinstance(search_result, BookSearchResponse)
-                        else BookSearchResponse.model_validate(search_result)
+                normalized_query = _normalize_tool_query(args.query)
+                cached_tool_result = tool_results_by_query.get(normalized_query)
+                if isinstance(cached_tool_result, BookServiceError):
+                    logger.info(
+                        "Book Agent reused failed search_books result query_length=%d code=%s",
+                        len(args.query),
+                        cached_tool_result.code,
                     )
-                except ValidationError as exc:
-                    raise BookServiceError("INVALID_RESPONSE") from exc
+                    raise cached_tool_result
 
-                duration_ms = (time.perf_counter() - tool_started_at) * 1000
-                if args.query not in queries:
+                if cached_tool_result is not None:
+                    logger.info(
+                        "Book Agent reused search_books result query_length=%d",
+                        len(args.query),
+                    )
+                    normalized_result = cached_tool_result.model_copy(deep=True)
+                    duration_ms = 0.0
+                else:
+                    tool_started_at = time.perf_counter()
+                    try:
+                        search_result = await self._get_book_service().search_books(
+                            args.query,
+                            page=1,
+                            limit=args.limit,
+                            language=args.language,
+                        )
+                        normalized_result = (
+                            search_result
+                            if isinstance(search_result, BookSearchResponse)
+                            else BookSearchResponse.model_validate(search_result)
+                        )
+                    except BookServiceError as error:
+                        tool_results_by_query[normalized_query] = error
+                        raise
+                    except ValidationError as exc:
+                        error = BookServiceError("INVALID_RESPONSE")
+                        tool_results_by_query[normalized_query] = error
+                        raise error from exc
+                    tool_results_by_query[normalized_query] = normalized_result
+                    duration_ms = (time.perf_counter() - tool_started_at) * 1000
+
+                if not any(
+                    _normalize_tool_query(query) == normalized_query
+                    for query in queries
+                ):
                     queries.append(args.query)
                 trace = BookAgentToolTrace(
                     tool="search_books",

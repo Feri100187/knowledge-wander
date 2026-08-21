@@ -217,12 +217,20 @@ class FakeProvider:
 
 
 class QueryProvider:
-    def __init__(self, results_by_query: dict[str, list[PublicBook]]) -> None:
+    def __init__(
+        self,
+        results_by_query: dict[str, list[PublicBook]],
+        errors_by_query: dict[str, BookServiceError] | None = None,
+    ) -> None:
         self.results_by_query = results_by_query
+        self.errors_by_query = errors_by_query or {}
         self.calls: list[dict[str, Any]] = []
 
     async def search(self, query: str, **kwargs: Any) -> list[PublicBook]:
         self.calls.append({"query": query, **kwargs})
+        error = self.errors_by_query.get(query)
+        if error:
+            raise error
         return list(self.results_by_query.get(query, []))
 
     async def close(self) -> None:
@@ -248,16 +256,15 @@ def test_composite_skips_google_when_open_library_has_enough_results(
     google = FakeProvider([public_book("g", "Google 书", source="google_books")])
     service = PublicBookSearchService(open_library, google, cache_ttl_seconds=600, cache_max_entries=10)
 
-    result = run(service.search_books("主题", page=1, limit=4, language=None))
+    result = run(service.search_books("topic", page=1, limit=4, language=None))
 
     assert len(result.books) == 4
     assert len(open_library.calls) == 1
     assert google.calls == []
 
 
-def test_bilingual_search_merges_deduplicates_and_keeps_english_books() -> None:
+def test_english_only_search_merges_deduplicates_and_keeps_user_query() -> None:
     duplicate_isbn = "9780306406157"
-    chinese_book = public_book("zh", "犯罪心理学入门", language="chi")
     open_duplicate = public_book("open-duplicate", "Criminal Psychology", isbn_13=duplicate_isbn, language="eng")
     google_duplicate = public_book(
         "google-duplicate",
@@ -275,11 +282,9 @@ def test_bilingual_search_merges_deduplicates_and_keeps_english_books() -> None:
         language="en",
     )
     open_library = QueryProvider({
-        "犯罪心理学": [chinese_book],
         "criminal psychology": [open_duplicate],
     })
     google = QueryProvider({
-        "犯罪心理学": [],
         "criminal psychology": [google_duplicate, english_book],
     })
     term_llm = FakeSearchTermLLM({"犯罪心理学": "criminal psychology"})
@@ -295,23 +300,168 @@ def test_bilingual_search_merges_deduplicates_and_keeps_english_books() -> None:
     second = run(service.search_books("犯罪心理学", page=1, limit=10, language=None))
 
     assert {book.title for book in first.books} == {
-        "犯罪心理学入门",
         "Criminal Psychology",
         "The Psychology of Crime",
     }
-    assert len(first.books) == 3
-    assert len({book.id for book in first.books}) == 3
+    assert len(first.books) == 2
+    assert len({book.id for book in first.books}) == 2
     assert first.query == "犯罪心理学"
     assert [book.id for book in second.books] == [book.id for book in first.books]
     assert len(term_llm.calls) == 1
-    assert [call["query"] for call in open_library.calls] == ["犯罪心理学", "criminal psychology"]
-    assert [call["query"] for call in google.calls] == ["犯罪心理学", "criminal psychology"]
-    assert open_library.calls[1]["language"] == "en"
-    assert google.calls[1]["language"] == "en"
+    assert [call["query"] for call in open_library.calls] == ["criminal psychology"]
+    assert [call["query"] for call in google.calls] == ["criminal psychology"]
+    assert open_library.calls[0]["language"] == "en"
+    assert google.calls[0]["language"] == "en"
     assert first.books[0].description == "完整的英文公开书目简介。"
 
 
-def test_bilingual_recommendation_uses_english_results_without_translating_ui_context() -> None:
+def test_primary_english_results_skip_fallback_query() -> None:
+    term_llm = FakeSearchTermLLM({"游戏关卡策划": "game level design\ngame design"})
+    open_library = QueryProvider({
+        "game level design": [public_book(str(index), f"Level book {index}") for index in range(5)],
+    })
+    google = QueryProvider({})
+    service = PublicBookSearchService(
+        open_library,
+        google,
+        query_builder=BookSearchQueryBuilder(term_llm),
+        cache_ttl_seconds=600,
+        cache_max_entries=10,
+    )
+
+    result = run(service.search_books("游戏关卡策划", page=1, limit=10, language=None))
+
+    assert len(result.books) == 5
+    assert [call["query"] for call in open_library.calls] == ["game level design"]
+    assert google.calls == []
+
+
+def test_result_cache_reuses_same_english_query_for_different_display_concepts() -> None:
+    term_llm = FakeSearchTermLLM({
+        "概念一": "shared topic",
+        "概念二": "shared topic",
+    })
+    open_library = QueryProvider({
+        "shared topic": [public_book(str(index), f"Shared book {index}") for index in range(5)],
+    })
+    service = PublicBookSearchService(
+        open_library,
+        QueryProvider({}),
+        query_builder=BookSearchQueryBuilder(term_llm),
+        cache_ttl_seconds=600,
+        cache_max_entries=10,
+    )
+
+    first = run(service.search_books("概念一", page=1, limit=10, language=None))
+    second = run(service.search_books("概念二", page=1, limit=10, language=None))
+
+    assert first.query == "概念一"
+    assert second.query == "概念二"
+    assert [book.id for book in second.books] == [book.id for book in first.books]
+    assert [call["query"] for call in open_library.calls] == ["shared topic"]
+
+
+def test_insufficient_primary_results_use_one_english_fallback_query() -> None:
+    term_llm = FakeSearchTermLLM({"游戏关卡策划": "game level design\ngame design"})
+    open_library = QueryProvider({
+        "game level design": [public_book("primary", "Primary book")],
+        "game design": [public_book("fallback", "Fallback book")],
+    })
+    google = QueryProvider({
+        "game level design": [],
+        "game design": [],
+    })
+    service = PublicBookSearchService(
+        open_library,
+        google,
+        query_builder=BookSearchQueryBuilder(term_llm),
+        cache_ttl_seconds=600,
+        cache_max_entries=10,
+    )
+
+    result = run(service.search_books("游戏关卡策划", page=1, limit=10, language=None))
+
+    assert {book.title for book in result.books} == {"Primary book", "Fallback book"}
+    assert [call["query"] for call in open_library.calls] == ["game level design", "game design"]
+    assert [call["query"] for call in google.calls] == ["game level design", "game design"]
+    assert all("游戏" not in call["query"] for call in [*open_library.calls, *google.calls])
+
+
+def test_partial_open_library_results_survive_google_failure() -> None:
+    term_llm = FakeSearchTermLLM({"游戏音效设计": "game audio design"})
+    open_library = QueryProvider({
+        "game audio design": [public_book(str(index), f"Audio book {index}") for index in range(3)],
+    })
+    google = QueryProvider(
+        {},
+        errors_by_query={"game audio design": BookServiceError("BOOK_SOURCE_UNAVAILABLE")},
+    )
+    service = PublicBookSearchService(
+        open_library,
+        google,
+        query_builder=BookSearchQueryBuilder(term_llm),
+        cache_ttl_seconds=600,
+        cache_max_entries=10,
+    )
+
+    result = run(service.search_books("游戏音效设计", page=1, limit=10, language=None))
+
+    assert len(result.books) == 3
+    assert result.error_code is None
+
+
+def test_open_library_failure_can_degrade_to_google_success() -> None:
+    term_llm = FakeSearchTermLLM({"犯罪心理学": "criminal psychology"})
+    open_library = QueryProvider(
+        {},
+        errors_by_query={"criminal psychology": BookServiceError("BOOK_SOURCE_UNAVAILABLE")},
+    )
+    google = QueryProvider({
+        "criminal psychology": [public_book("google", "Criminal Psychology", source="google_books")],
+    })
+    service = PublicBookSearchService(
+        open_library,
+        google,
+        query_builder=BookSearchQueryBuilder(term_llm),
+        cache_ttl_seconds=600,
+        cache_max_entries=10,
+    )
+
+    result = run(service.search_books("犯罪心理学", page=1, limit=10, language=None))
+
+    assert [book.title for book in result.books] == ["Criminal Psychology"]
+
+
+def test_successful_empty_sources_return_no_results() -> None:
+    service = PublicBookSearchService(
+        FakeProvider(),
+        FakeProvider(),
+        cache_ttl_seconds=600,
+        cache_max_entries=10,
+    )
+
+    result = run(service.search_books("machine learning", page=1, limit=10, language=None))
+
+    assert result.books == []
+    assert result.error_code == "NO_RESULTS"
+
+
+def test_chinese_search_without_english_term_returns_query_error() -> None:
+    service = PublicBookSearchService(
+        FakeProvider([public_book("should-not-be-called", "不应请求")]),
+        FakeProvider(),
+        query_builder=BookSearchQueryBuilder(FakeSearchTermLLM("不合法的中文输出")),
+        cache_ttl_seconds=600,
+        cache_max_entries=10,
+    )
+
+    with pytest.raises(BookServiceError) as caught:
+        run(service.search_books("机器学习", page=1, limit=10, language=None))
+
+    assert caught.value.code == "BOOK_QUERY_UNAVAILABLE"
+
+
+def test_english_recommendation_keeps_chinese_ui_context() -> None:
     english_book = public_book(
         "english",
         "Criminal Psychology",
@@ -319,8 +469,8 @@ def test_bilingual_recommendation_uses_english_results_without_translating_ui_co
         authors=["English Author"],
         language="en",
     )
-    open_library = QueryProvider({"犯罪心理学": [], "criminal psychology": [english_book]})
-    google = QueryProvider({"犯罪心理学": [], "criminal psychology": []})
+    open_library = QueryProvider({"criminal psychology": [english_book]})
+    google = QueryProvider({"criminal psychology": []})
     service = PublicBookService(
         PublicBookSearchService(
             open_library,
@@ -343,7 +493,7 @@ def test_bilingual_recommendation_uses_english_results_without_translating_ui_co
     assert response.books[0].title == "Criminal Psychology"
     assert "犯罪心理学" in response.books[0].reason
     assert "criminal psychology" not in response.books[0].reason
-    assert [call["query"] for call in open_library.calls] == ["犯罪心理学", "criminal psychology"]
+    assert [call["query"] for call in open_library.calls] == ["criminal psychology"]
 
 
 def test_composite_falls_back_and_deduplicates_by_isbn_and_cache() -> None:
@@ -354,8 +504,8 @@ def test_composite_falls_back_and_deduplicates_by_isbn_and_cache() -> None:
     google = FakeProvider([fallback, public_book("g2", "另一本文献", source="google_books")])
     service = PublicBookSearchService(open_library, google, cache_ttl_seconds=600, cache_max_entries=10)
 
-    first = run(service.search_books("主题", page=1, limit=10, language=None))
-    second = run(service.search_books("主题", page=1, limit=10, language=None))
+    first = run(service.search_books("topic", page=1, limit=10, language=None))
+    second = run(service.search_books("topic", page=1, limit=10, language=None))
 
     assert len(first.books) == 2
     assert first.books[0].id == f"isbn:{isbn}"
@@ -370,13 +520,13 @@ def test_composite_degrades_when_one_source_fails_and_errors_when_both_fail() ->
     open_library = FakeProvider([open_book], error=None)
     google = FakeProvider(error=BookServiceError("BOOK_SOURCE_UNAVAILABLE"))
     service = PublicBookSearchService(open_library, google, cache_ttl_seconds=600, cache_max_entries=10)
-    assert len(run(service.search_books("主题", page=1, limit=10, language=None)).books) == 1
+    assert len(run(service.search_books("topic", page=1, limit=10, language=None)).books) == 1
 
     failed_open = FakeProvider(error=BookServiceError("SEARCH_TIMEOUT"))
     failed_google = FakeProvider(error=BookServiceError("BOOK_SOURCE_UNAVAILABLE"))
     unavailable = PublicBookSearchService(failed_open, failed_google, cache_ttl_seconds=600, cache_max_entries=10)
     with pytest.raises(BookServiceError) as caught:
-        run(unavailable.search_books("主题", page=1, limit=10, language=None))
+        run(unavailable.search_books("topic", page=1, limit=10, language=None))
     assert caught.value.code == "BOOK_SOURCE_UNAVAILABLE"
 
 
@@ -385,6 +535,9 @@ def test_recommendation_uses_public_metadata_only() -> None:
         PublicBookSearchService(
             FakeProvider([public_book("node", "程序化叙事设计", description="关于程序化叙事的简介")]),
             FakeProvider(),
+            query_builder=BookSearchQueryBuilder(
+                FakeSearchTermLLM({"程序化叙事": "procedural narrative"})
+            ),
             cache_ttl_seconds=600,
             cache_max_entries=10,
         )
@@ -431,3 +584,20 @@ def test_books_api_routes_use_public_names_and_error_mapping(monkeypatch: pytest
     unavailable = client.get("/api/books/search", params={"q": "Python"})
     assert unavailable.status_code == 503
     assert unavailable.json()["detail"]["code"] == "BOOK_SOURCE_UNAVAILABLE"
+
+    monkeypatch.setattr(
+        books_api,
+        "get_book_service",
+        lambda: PublicBookService(
+            PublicBookSearchService(
+                FakeProvider(),
+                FakeProvider(),
+                query_builder=BookSearchQueryBuilder(FakeSearchTermLLM("中文检索词")),
+                cache_ttl_seconds=600,
+                cache_max_entries=10,
+            )
+        ),
+    )
+    query_unavailable = client.get("/api/books/search", params={"q": "机器学习"})
+    assert query_unavailable.status_code == 503
+    assert query_unavailable.json()["detail"]["code"] == "BOOK_QUERY_UNAVAILABLE"

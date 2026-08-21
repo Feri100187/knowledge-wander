@@ -1,4 +1,4 @@
-"""Tests for retrieval-only bilingual book search terms."""
+"""Tests for retrieval-only English book search terms."""
 
 from __future__ import annotations
 
@@ -47,25 +47,41 @@ def test_english_query_skips_translation() -> None:
     terms = run(BookSearchQueryBuilder(llm).build("machine learning"))
 
     assert terms.original_query == "machine learning"
-    assert terms.english_query is None
+    assert terms.primary_english_query == "machine learning"
+    assert terms.english_query == "machine learning"
+    assert terms.fallback_english_query is None
     assert llm.calls == []
 
 
-def test_invalid_or_failed_generation_falls_back_without_raising() -> None:
+def test_primary_and_optional_fallback_terms_are_normalized() -> None:
+    llm = FakeLLM("game level design\ngame design")
+
+    terms = run(BookSearchQueryBuilder(llm).build("游戏关卡策划"))
+
+    assert terms.primary_english_query == "game level design"
+    assert terms.fallback_english_query == "game design"
+
+
+def test_invalid_or_failed_generation_returns_no_english_term() -> None:
     invalid = FakeLLM("books about criminal psychology")
     failed = FakeLLM(error=TimeoutError("llm timeout"))
 
     invalid_terms = run(BookSearchQueryBuilder(invalid).build("犯罪心理学"))
     failed_terms = run(BookSearchQueryBuilder(failed).build("犯罪心理学"))
 
-    assert invalid_terms.english_query is None
-    assert failed_terms.english_query is None
+    assert invalid_terms.primary_english_query is None
+    assert invalid_terms.fallback_english_query is None
+    assert failed_terms.primary_english_query is None
+    assert failed_terms.fallback_english_query is None
 
 
-def test_unconfigured_llm_keeps_chinese_search_available(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_unconfigured_llm_does_not_fall_back_to_chinese_search(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr("app.services.book_search_query.get_llm_service", lambda: None)
 
     terms = run(BookSearchQueryBuilder().build("机器学习"))
 
     assert terms.original_query == "机器学习"
-    assert terms.english_query is None
+    assert terms.primary_english_query is None
+    assert terms.fallback_english_query is None

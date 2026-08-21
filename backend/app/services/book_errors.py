@@ -5,12 +5,14 @@ from __future__ import annotations
 
 ERROR_HTTP_STATUS: dict[str, int] = {
     "BOOK_SOURCE_UNAVAILABLE": 503,
+    "BOOK_QUERY_UNAVAILABLE": 503,
     "SEARCH_TIMEOUT": 504,
     "INVALID_RESPONSE": 502,
 }
 
 ERROR_MESSAGE: dict[str, str] = {
     "BOOK_SOURCE_UNAVAILABLE": "公开图书数据源暂时不可用，请稍后重试。",
+    "BOOK_QUERY_UNAVAILABLE": "暂时无法生成公开图书检索词，请稍后重试。",
     "SEARCH_TIMEOUT": "公开图书检索超时，请稍后重试。",
     "INVALID_RESPONSE": "公开图书数据源返回的数据格式无法识别。",
     "NO_RESULTS": "暂未找到匹配的公开图书。",
