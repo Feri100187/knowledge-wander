@@ -240,7 +240,10 @@ class FakeSearchTermLLM:
         return {"choices": [{"message": {"content": self.terms_by_query[query]}}]}
 
 
-def test_composite_skips_google_when_open_library_has_enough_results() -> None:
+def test_composite_skips_google_when_open_library_has_enough_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("app.services.book_search_query.get_llm_service", lambda: None)
     open_library = FakeProvider([public_book(str(i), f"书{i}") for i in range(5)])
     google = FakeProvider([public_book("g", "Google 书", source="google_books")])
     service = PublicBookSearchService(open_library, google, cache_ttl_seconds=600, cache_max_entries=10)
